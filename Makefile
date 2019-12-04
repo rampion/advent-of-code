@@ -30,15 +30,13 @@ part.2: PART=part2
 part.%: $(DIR)/part%.hs
 	make --quiet ghcid EXE=$(EXE)
 
-$(DIR):
+$(DIR)/part%.hs:
 	mkdir -p $(DIR)
-
-$(DIR)/part%.hs: $(DIR)
 	grep "executable $(EXE)" advent-of-code.cabal || echo "$$CABAL_TEMPLATE" >> advent-of-code.cabal
 	echo "$$HASKELL_TEMPLATE" > $@
 
 ghcid:
-	ghcid --command "cabal v2-repl $(EXE)" --restart=advent-of-code.cabal --run --test=test --allow-eval
+	ghcid --command "cabal v2-repl $(EXE)" --restart=advent-of-code.cabal --test=test --allow-eval --run=main
 
 .PRECIOUS: $(DIR)/part%.hs
 .PHONY: default part.% ghcid update-cabal
