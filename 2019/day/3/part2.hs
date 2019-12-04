@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 module Main where
 
+import Data.Maybe (catMaybes)
 import Test.HUnit
 import Text.Parsec (runParser, char, newline, sepBy, choice, digit)
 import Text.Parsec.String (parseFromFile, Parser)
@@ -12,22 +13,21 @@ import Control.Monad.State (evalState, state)
 import Data.Functor (($>))
 import Control.Applicative (some)
 
--- example1 => 6
--- example2 => 159
--- example3 => 135
-
 main :: IO ()
 main = do
   runTestTT . TestList . map TestCase $ 
     [ 30 @<-? findMinIntersectionSteps "2019/day/3/example1"
     , 610 @<-? findMinIntersectionSteps "2019/day/3/example2"
     , 410 @<-? findMinIntersectionSteps "2019/day/3/example3"
+    , Nothing @=? findIntersection (Segment U 1 0 0 0) (Segment U 1 1 0 0)
+    , Just (Point 0 1 1) @=? findIntersection (Segment U 1 0 0 0) (Segment U 1 0 1 0)
+    , Just (Point 0 5 5) @=? findIntersection (Segment U 10 0 0 0) (Segment U 8 0 5 0)
+    , Just (Point 0 0 5) @=? findIntersection (Segment U 10 0 0 0) (Segment D 8 0 5 0)
     ] 
   print =<< findMinIntersectionSteps "2019/day/3/input"
 
 (@<-?) :: (Eq a, Show a) => a -> IO a -> Assertion
 expected @<-? action = (expected @=?) =<< action
-
 
 findMinIntersectionSteps :: FilePath -> IO Int
 findMinIntersectionSteps path =
@@ -50,104 +50,44 @@ data Segment = Segment
   }
   deriving (Eq, Show)
 
-data Intersection = Point Int Int Int | Span Segment
+data Intersection = Point Int Int Int
   deriving (Eq, Show)
 
 getMinSteps :: Intersection -> Int
 getMinSteps (Point x y n) = n
-getMinSteps (Span Segment{..}) = numSteps
 
 removeOrigin :: Intersection -> [Intersection]
 removeOrigin (Point 0 0 _) = []
-removeOrigin (Span (Segment o lo hi 0 n d)) 
-  | lo <= 0 && 0 <= hi = [ Span (Segment o lo (-1) 0) | lo < 0 ] ++
-                         [ Span (Segment o 1    hi 0) | hi > 0 ]
 removeOrigin p = [p]
 
-minmax :: Ord a => a -> a -> (a,a)
-minmax a b = if a < b then (a,b) else (b,a)
-
-minX :: Segment -> Int
-minX Segment{..} = case direction
-  L -> xCoord - delta
-  _ -> xCoord
-
-maxX :: Segment -> Int
-maxX Segment{..} = case direction
-  R -> xCoord + delta
-  _ -> xCoord
-
-minY :: Segment -> Int
-minY Segment{..} = case direction
-  D -> yCoord - delta
-  _ -> yCoord
-
-maxY :: Segment -> Int
-maxY Segment{..} = case direction
-  U -> yCoord + delta
-  _ -> yCoord
+dim :: Segment -> (Int,Int,Int,Int,Int -> Int -> Int)
+dim Segment{..} = case direction of
+  U -> (xCoord,yCoord,xCoord,yCoord+delta,\_ y -> numSteps + y - yCoord)
+  R -> (xCoord,yCoord,xCoord+delta,yCoord,\x _ -> numSteps + x - xCoord)
+  D -> (xCoord,yCoord-delta,xCoord,yCoord,\_ y -> numSteps + yCoord - y)
+  L -> (xCoord-delta,yCoord,xCoord,yCoord,\x _ -> numSteps + xCoord - x)
 
 findIntersections :: [Segment] -> [Segment] -> [Intersection]
-findIntersections as bs = do
-  a <- as
-  b <- bs
-  let loX = minX a `max` minX b
-      hiX = maxX a `min` maxX b
-      loY = minY a `max` minY b
-      hiY = maxY a `min` maxY b
+findIntersections as bs = catMaybes $ findIntersection <$> as <*> bs
+
+findIntersection :: Segment -> Segment -> Maybe Intersection
+findIntersection a b = do
+  let (aX,aY,aX',aY',aD) = dim a
+      (bX,bY,bX',bY',bD) = dim b
+
+      loX = aX  `max` bX
+      hiX = aX' `min` bX'
+      loY = aY  `max` bY
+      hiY = aY' `min` bY'
+
   guard $ loX <= hiX && loY <= hiY
+  return $ case direction a of
+    U -> Point loX loY (aD loX loY + bD loX loY)
+    R -> Point loX loY (aD loX loY + bD loX loY)
+    D -> Point hiX hiY (aD hiX hiY + bD hiX hiY)
+    L -> Point hiX hiY (aD hiX hiY + bD hiX hiY)
 
-
-
-  case (direction a, direction b) of
-    (U, U) -> do
-      let lo = yCoord a `max` yCoord b
-          hi = yCoord' a `min` yCoord' b
-      guard $ xCoord a == xCoord b && lo < hi
-      return $ Point (xCoord a) lo (numSteps a + lo - yCoord a
-                                  + numSteps b + lo - yCoord b)
-    (D, D) -> do
-      let lo = yCoord' a `max` yCoord' b
-          hi = yCoord a `min` yCoord b
-      guard $ xCoord a == xCoord b && lo < hi
-      return $ Point (xCoord a) hi (numSteps a + yCoord a - hi
-                                  + numSteps b + yCoord b - hi)
-
-          
-
-
-
-
-
-
-  let (minA, maxA) = start a `minmax` stop a
-      (minB, maxB) = start b `minmax` stop b
-      conA = constant a
-      conB = constant b
-      lo = minA `max` minB
-      hi = maxA `min` maxB
-  if orientation a == orientation b
-    then do
-      guard $ constant a == constant b
-      case lo `compare` hi of
-        LT -> return $ Span Segment
-                            { minimal     = lo
-                            , maximal     = hi
-                            , constant    = constant a
-                            , orientation = orientation a
-                            }
-        EQ -> case orientation a of
-                Vertical    -> return $ Point (constant a) lo
-                Horizontal  -> return $ Point lo (constant a)
-        GT -> []
-    else do
-      guard $ minA <= conB && conB <= maxA
-           && minB <= constant a && constant a <= maxB
-      return $ case orientation a of
-        Vertical    -> Point conA conB
-        Horizontal  -> Point conB conA
-
-type Coord = (Int, Int)
+type Coord = (Int, Int, Int)
 
 toSegments :: [Step] -> [Segment]
 toSegments = flip evalState (0,0,0) . mapM (state . flip step) where
