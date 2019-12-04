@@ -1,0 +1,3 @@
+# created by cabal
+.ghc.environment.*
+dist-newstyle/

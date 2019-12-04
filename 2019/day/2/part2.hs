@@ -10,16 +10,18 @@ import Control.Monad.ST (runST)
 import Control.Monad.Primitive (PrimMonad, PrimState)
 
 main :: IO ()
-main = print . solve . readInput =<< getContents
+main = do
+  v <- readInput <$> readFile "2019/day/2/input"
+  print [ 100 * noun + verb | noun <- [0..99], verb <- [0..99], solve noun verb v == 19690720 ]
 
 readInput :: String -> Vector Int
 readInput = V.fromList . map read . splitOn ","
 
-solve :: Vector Int -> Int
-solve v = runST $ do
+solve :: Int -> Int -> Vector Int -> Int
+solve noun verb v = runST $ do
   v <- V.thaw v
-  M.write v 1 12
-  M.write v 2 2
+  M.write v 1 noun
+  M.write v 2 verb
   runProgram v 0
   M.read v 0
 
