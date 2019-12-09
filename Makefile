@@ -1,6 +1,9 @@
-DIR := $(shell date +"%Y/day/%-d")
+DAY 	:= $(shell date +"%-d")
+YEAR 	:= $(shell date +"%Y")
+
+DIR = $(YEAR)/day/$(DAY)
 SRC = $(DIR)/$(PART).hs
-EXE = $(shell date +"day%-d")-$(PART)
+EXE = day$(DAY)-$(PART)
 
 export define HASKELL_TEMPLATE =
 module Main where
