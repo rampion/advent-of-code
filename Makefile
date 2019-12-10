@@ -2,7 +2,7 @@ DIR := $(shell date +"%Y/day/%-d")
 SRC = $(DIR)/$(PART).hs
 EXE = $(shell date +"day%-d")-$(PART)
 
-export define HASKELL_TEMPLATE =
+define HASKELL_TEMPLATE =
 module Main where
 
 import Test.DocTest (doctest)
@@ -13,14 +13,17 @@ main = return ()
 test :: IO ()
 test = doctest ["$(SRC)"]
 endef
+export HASKELL_TEMPLATE
 
-export define CABAL_TEMPLATE =
+
+define CABAL_TEMPLATE =
 
 executable $(EXE)
   main-is:             $(SRC)
   build-depends:       base, doctest
   default-language:    Haskell2010
 endef
+export CABAL_TEMPLATE
 
 default: part.1
 
@@ -36,7 +39,7 @@ $(DIR)/part%.hs:
 	echo "$$HASKELL_TEMPLATE" > $@
 
 ghcid:
-	ghcid --command "cabal v2-repl $(EXE)" --restart=advent-of-code.cabal --test=test --allow-eval --run=main
+	ghcid --command "cabal repl $(EXE) --write-ghc-environment-files=ghc8.4.4+" --restart=advent-of-code.cabal --test=test --allow-eval --run=main
 
 .PRECIOUS: $(DIR)/part%.hs
 .PHONY: default part.% ghcid update-cabal

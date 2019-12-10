@@ -1,171 +1,290 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE EmptyDataDeriving #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Main where
 
-import Test.DocTest (doctest)
-import Data.List.Split (splitOn)
-
-import Data.Vector (Vector)
-import qualified Data.Vector as V
-import Data.Vector.Mutable (MVector)
-import qualified Data.Vector.Mutable as M
+import Control.Monad (when, (<=<))
+import Control.Monad.Except (MonadError(..), ExceptT, runExceptT)
+import Control.Monad.Primitive (PrimMonad(..))
+import Control.Monad.Reader (MonadReader(..), ReaderT(..))
+import Control.Monad.State (MonadState(..), StateT(..), evalStateT, gets, modify)
 import Control.Monad.ST (ST, runST)
+import Control.Monad.Trans (lift)
 
-import PolySemy
+import Data.Maybe (isJust)
+import Data.List.Split (splitOn)
+import Data.Vector (Vector, MVector)
+import qualified Data.Vector as V
+import qualified Data.Vector.Mutable as M
 
+import Test.DocTest (doctest)
+
+-- import Data.Vector.Mutable (MVector)
+-- import qualified Data.Vector.Mutable as M
 
 test :: IO ()
 test = doctest ["2019/day/5/part1.hs"]
 
 main :: IO ()
-main = do
-  v <- readProgram <$> readFile "2019/day/5/input"
-  print $ runDiagnostic v
+main = print . diagnostic . readProgram =<< readFile "2019/day/5/input"
+
+type Program = Vector Value
 
 -- |
--- >>> readProgram "1101,100,-1,4,0"
--- [1101,100,-1,4,0]
+-- >>> ProgramOutput 5
+-- 5
+newtype ProgramOutput = ProgramOutput { getProgramOutput :: Int }
+  deriving newtype (Show, Eq)
+
+newtype ProgramInput = ProgramInput { getProgramInput :: Int }
+  deriving newtype (Show, Eq)
+
+data ProgramException = ProgramException
+  { headLocation  :: Location
+  , memory        :: Program
+  , programError  :: ProgramError
+  }
+  deriving (Show, Eq)
+
+data ProgramError
+  = OutOfBoundsRead { readLocation :: Location }
+  | OutOfBoundsWrite { writeLocation :: Location, writeValue ::  Value }
+  | HeadOverflow
+  | IllegalOpcode { opcode :: Int, fullIntcode :: Int }
+  | IllegalFlag { flag :: Int, digitROffset :: Int, fullIntcode ::  Int }
+  | ExcessFlags { flags :: Int, digitROffset :: Int, fullIntcode ::  Int }
+  deriving (Show, Eq)
+
+-- |
+-- >>> readProgram "1002,4,3,4,33"
+-- [1002,4,3,4,33]
 readProgram :: String -> Program
-readProgram = V.fromList . map read . splitOn ","
+readProgram = V.fromList . map (Value . read) . splitOn ","
 
-runProgram :: m ()
-runProgram = forever $
-  op >>= \case
-    Add lhs rhs -> do
-      a <- arg lhs
-      b <- arg rhs
-      c <- loc
-      store (a + b) c
-    Multiply lhs rhs -> do
-      a <- arg lhs
-      b <- arg rhs
-      c <- loc
-      store (a * b) c
-    Input -> do
-      a <- input
-      b <- loc
-      store a c
-    Output val -> do
-      a <- arg val
-      output a
-    Halt -> halt
+class Monad m => MonadInput i m | m -> i where
+  input :: m i
 
-op :: m Op
-op = do
-  n <- shift
-  case n `quotRem` 100 of
-    (flags, 1) -> do
-        ((lhs, rhs)
-    (param -> (param -> (0, rhs), lhs), 1) -> return $ Add lhs rhs
-    (param -> (param -> (0, rhs), lhs), 2) -> return $ Multiply lhs rhs
-    (0,                                 3) -> return $ Input
-    (param -> (0, val),                 4) -> return $ Output val
-    (0,                                99) -> fail $ "bad opcode " ++ show n
+instance MonadInput i m => MonadInput i (StateT s m) where
+  input = lift input
 
-param 
+instance MonadInput i m => MonadInput i (ReaderT e m) where
+  input = lift input
 
-loc :: m Loc
-loc = 
+class Monad m => MonadOutput o m | m -> o where
+  output :: o -> m ()
 
-arg :: Arg -> m Int
+instance MonadOutput i m => MonadOutput i (StateT s m) where
+  output = lift . output
 
-data Op where
-  Add       :: Arg -> Arg -> Op
-  Multiply  :: Arg -> Arg -> Op
-  Input     ::               Op
-  Output    :: Arg ->        Op
-  Halt      ::               Op
+instance MonadOutput i m => MonadOutput i (ReaderT e m) where
+  output = lift . output
 
-newtype Loc = Loc { getLoc :: Int }
-data Arg = Immediate | Pointer
+runProgram ::
+  ( MonadInput  ProgramInput m
+  , MonadOutput ProgramOutput m 
+  , MonadError  ProgramException m
+  , PrimMonad m
+  ) => Program -> m ()
+runProgram = runReaderT (evalStateT programLoop (Location 0)) <=< V.thaw
 
-op :: m Op
+type Memory s = MVector s Value
 
+type MonadProgram m =
+  ( MonadInput  ProgramInput m
+  , MonadOutput ProgramOutput m 
+  , MonadError  ProgramException m
+  , PrimMonad m
+  , MonadState  Location m
+  , MonadReader (Memory (PrimState m)) m
+  )
 
-shift   :: m Int
-store   :: Int -> m ()
-input   :: m Int
-output  :: Int -> m ()
-halt    :: m ()
+throwProgramError :: MonadProgram m => ProgramError -> m a
+throwProgramError err = do
+  i <- get
+  v <- V.freeze =<< ask
+  throwError $ ProgramException { headLocation=i, memory=v, programError=err }
 
+programLoop :: MonadProgram m => m ()
+programLoop = intcode >>= \case
+  Add lhs rhs -> do
+    a <- param lhs
+    b <- param rhs
+    i <- location
+    store i (a + b)
+    programLoop
+  Multiply lhs rhs -> do
+    a <- param lhs
+    b <- param rhs
+    i <- location
+    store i (a * b)
+    programLoop
+  Input -> do
+    a <- Value . getProgramInput <$> input
+    i <- location
+    store i a
+    programLoop
+  Output val -> do
+    a <- ProgramOutput . getValue <$> param val
+    output a
+    programLoop
+  Halt -> return ()
 
-addP :: Parser Op
-addP = binOpP 1 Add
+intcode :: MonadProgram m => m IntCode
+intcode = do
+  n <- getValue <$> shift
+  let zero j = case n `div` 10^j of
+        0 -> return ()
+        x -> throwProgramError $ ExcessFlags
+                                  { flags = x
+                                  , digitROffset = j
+                                  , fullIntcode = n
+                                  }
 
-binOpP :: Parser OpType
+      mode j = case (n `div` 10^j) `mod` 10 of
+        0 -> return Pointer
+        1 -> return Immediate
+        x -> throwProgramError $ IllegalFlag
+                                  { flag = x
+                                  , digitROffset = j
+                                  , fullIntcode = n
+                                  }
+      bin c = do
+        lhs <- mode 2
+        rhs <- mode 3
+        zero 4
+        return $ c lhs rhs
 
-  flags <- opCodeP 1
-  (flags, lhs) <- flagP flags
-  (flags, rhs) <- flagP flags
-  locModeP flags
-  return (Bin con lhs rhs)
+  case n `mod` 100 of
+    1 -> bin Add
+    2 -> bin Multiply
+    3 -> do
+      zero 2
+      return Input
+    4 -> do
+      val <- mode 2
+      zero 3
+      return $ Output val
+    99 -> return Halt
+    x -> throwProgramError $ IllegalOpcode
+                              { opcode = x
+                              , fullIntcode = n
+                              }
 
-flagP :: Flags -> Parser (Flags, ArgType)
-flagP flags = traverse modeP (flags `divMod` 10)
+param :: MonadProgram m => ParameterMode -> m Value
+param Pointer = fetch . Location . getValue =<< shift
+param Immediate = shift
 
+location :: MonadProgram m => m Location
+location = Location . getValue <$> shift
 
-op :: 
+shift :: MonadProgram m => m Value
+shift = do
+  i <- get
+  modify succ
+  fetch i `catchError` \_ -> throwProgramError HeadOverflow
 
-makeSem ''Op
+fetch :: MonadProgram m => Location -> m Value
+fetch i = do
+  v <- ask
+  when (getLocation i >= M.length v) $
+    throwProgramError $ OutOfBoundsRead i
+  M.read v (getLocation i)
 
-OpToST :: Member (Embed (ST s)) => Sem (
+store :: MonadProgram m => Location -> Value -> m ()
+store i a = do
+  v <- ask
+  when (getLocation i >= M.length v) $
+    throwProgramError $ OutOfBoundsWrite i a
+  M.write v (getLocation i) a
 
+data ParameterMode = Pointer | Immediate
 
+newtype Value = Value { getValue :: Int }
+  deriving newtype (Show, Eq, Num)
 
+newtype Location = Location { getLocation :: Int }
+  deriving newtype (Show, Eq, Enum)
 
-type Program = Vector Int
-type Process s = MVector s Int
+data IntCode where
+  Add       :: ParameterMode -> ParameterMode -> IntCode
+  Multiply  :: ParameterMode -> ParameterMode -> IntCode
+  Input     ::                                   IntCode
+  Output    :: ParameterMode ->                  IntCode
+  Halt      ::                                   IntCode
 
-data EffectsF a where
-  Input   :: EffectsF Int
-  Output  :: Int -> EffectsF ()
-  Halt    :: EffectsF ()
+data DiagnosticError
+  = OutputAfterNonzero ProgramOutput
+  | MoreThanOneInputRequest
+  | FromProgram ProgramException
+  deriving Show
 
-type Effects = Free EffectsF
+data DiagnosticState = DiagnosticState
+  { inputRequested :: Bool
+  , numOutputs :: Int
+  , nonZeroOutput :: Maybe ProgramOutput
+  }
+  deriving Show
 
-runDiagnostic :: Program -> Either [Int] Int
-runDiagnostic v = runProgram v $ \case
-  Input f     -> return (f 1)
-  Output i a  -> write i >> return a
-  Halt        -> 
+initialDiagnosticState :: DiagnosticState
+initialDiagnosticState = DiagnosticState
+  { inputRequested=False
+  , numOutputs=0
+  , nonZeroOutput=Nothing
+  }
 
+newtype DiagnosticCode = DiagnosticCode { getDiagnosticCode :: Int }
+  deriving newtype (Show, Eq)
 
-runProgram :: Monad m => (EffectsF a -> m a) -> Program -> m ()
-runProgram f v = runST $ do
-  v <- V.thaw v
-  runProcess f v
+newtype Diagnostic s a = Diagnostic { getDiagnostic :: ExceptT DiagnosticError (StateT DiagnosticState (ST s)) a }
+  deriving (Functor, Applicative, Monad)
 
-runProcess :: Monad m => (EffectsF a -> m a) -> Process s -> ST s (m ())
+instance PrimMonad (Diagnostic s) where
+  type PrimState (Diagnostic s) = PrimState (ST s)
+  primitive = Diagnostic . primitive
 
+instance MonadError ProgramException (Diagnostic s) where
+  throwError = Diagnostic . throwError . FromProgram
+  catchError (Diagnostic ma) f = Diagnostic . catchError ma $ \case
+    FromProgram err  -> getDiagnostic $ f err
+    err              -> throwError err
 
+whenM :: Monad m => m Bool -> m () -> m ()
+whenM mb mu = mb >>= \case
+  True  -> mu
+  False -> return ()
 
-readInst :: Int -> Op
+instance MonadInput ProgramInput (Diagnostic s) where
+  input = Diagnostic $ do
+    whenM (gets inputRequested) $
+      throwError MoreThanOneInputRequest
+    modify $ \s -> s { inputRequested = True }
+    return $ ProgramInput 1
 
+instance MonadOutput ProgramOutput (Diagnostic s) where
+  output o = Diagnostic $ do
+    whenM (gets $ isJust . nonZeroOutput) $
+      throwError $ OutputAfterNonzero o
+    modify $ \s -> s 
+      { nonZeroOutput = case o of
+          ProgramOutput 0 -> Nothing
+          _               -> Just o
+      , numOutputs = numOutputs s + 1
+      }
 
-solve :: Int -> Int -> Vector Int -> Int
-solve noun verb v = runST $ do
-  v <- V.thaw v
-  M.write v 1 noun
-  M.write v 2 verb
-  runProgram v 0
-  M.read v 0
+runDiagnostic :: DiagnosticState -> (forall s. Diagnostic s a) -> (Either DiagnosticError a, DiagnosticState)
+runDiagnostic initial d = runST $ flip runStateT initial $ runExceptT $ getDiagnostic d
 
-runProgram :: PrimMonad m => MVector (PrimState m) Int -> Int -> m ()
-runProgram v i = do
-  let runOp op = do
-        writePtr v (i+3) =<< op <$> readPtr v (i+1) <*> readPtr v (i+2)
-        runProgram v (i+4)
-
-  (opCode, parameterModes) <- readInst <$> M.read v i
-  case opCode of
-    1   -> runOp (+)
-    2   -> runOp (*)
-    3   -> get
-    4   -> put
-    99  -> return ()
-    _   -> fail $ "Unrecognized opcode " ++ show opCode
-
-writePtr :: PrimMonad m => MVector (PrimState m) Int -> Int -> Int -> m ()
-writePtr v i a = (M.write v `flip` a) =<< M.read v i
-
-readPtr :: PrimMonad m => MVector (PrimState m) Int -> Int -> m Int
-readPtr v i = M.read v =<< M.read v i
-
+diagnostic :: Program -> Either (DiagnosticError, DiagnosticState) DiagnosticCode
+diagnostic p = case runDiagnostic initialDiagnosticState (runProgram p) of
+  (Left err, final) -> Left (err, final)
+  (Right (), final) -> Right . DiagnosticCode . maybe 0 getProgramOutput $ nonZeroOutput final

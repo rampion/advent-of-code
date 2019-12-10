@@ -51,7 +51,12 @@ executable day4-part2
 
 executable day5-part1
   main-is:             2019/day/5/part1.hs
-  build-depends:       base, doctest, split, vector, primitive
+  build-depends:       base, doctest, mtl, vector, primitive, split
+  default-language:    Haskell2010
+
+executable day5-part2
+  main-is:             2019/day/5/part2.hs
+  build-depends:       base, doctest, mtl, vector, primitive, split
   default-language:    Haskell2010
 
 executable day6-part1
