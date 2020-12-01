@@ -5,4 +5,6 @@ dist-newstyle/
 *~
 *.hi
 input
-bin
+bin/
+*.lock
+target/
