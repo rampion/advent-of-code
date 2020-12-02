@@ -76,7 +76,7 @@ executable day7-part1
 
 executable day7-part2
   main-is:             2019/day/7/part2.hs
-  build-depends:       base, doctest, mtl, vector, primitive, containers, split, ghc
+  build-depends:       base, doctest, mtl, vector, primitive, containers, split, ghc, free
   default-language:    Haskell2010
 
 executable day8-part1
