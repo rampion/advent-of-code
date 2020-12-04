@@ -1,5 +1,5 @@
-#BIN:=solve/target/debug/solve
-BIN:=bin/Solve
+BIN:=solve/target/debug/solve
+#BIN:=bin/Solve
 
 run-all: run-example run-input
 
