@@ -1,23 +1,23 @@
-BIN:=solve/target/debug/solve
+BIN:=target/debug/solve
 #BIN:=bin/Solve
 
 run-all: run-example run-input
 
 run-input: $(BIN)
-	$< input
+	$< data/input
 
 run-example: $(BIN)
-	$< example
+	$< data/example
 
 bin/Solve: Solve.hs bin/
 	ghc --make $< -o $@ -package optparse-generic
 
-solve/target/debug/solve: solve/Cargo.toml solve/src/main.rs
-	cargo build --manifest-path=$<
+target/debug/solve: Cargo.toml src/main.rs
+	cargo build
 
 bin/:
 	mkdir bin
 
-solve/Cargo.toml:
-	cargo new --vcs none solve
+Cargo.toml:
+	cargo init --name solve
 
