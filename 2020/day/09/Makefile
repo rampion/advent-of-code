@@ -1,7 +1,7 @@
 HASKELL_BIN := dist-newstyle/bin/solve-aoc
 RUST_BIN := target/debug/solve
 
-BINS := ${HASKELL_BIN}
+BINS := ${HASKELL_BIN} ${RUST_BIN}
 INPUTS := $(wildcard data/*)
 
 define NEWLINE
@@ -20,7 +20,7 @@ Cargo.toml:
 
 $(HASKELL_BIN): src/Main.hs solve-aoc.cabal | dist-newstyle/bin/
 	cabal build
-	find dist-newstyle -type f -name solve-aoc -exec cp {} dist-newstyle/bin/ \;
+	find dist-newstyle/build -type f -name solve-aoc -exec cp {} dist-newstyle/bin/ \;
 
 solve-aoc.cabal src/Main.hs &: | src/
 	cabal init --package-name solve-aoc --synopsis "Solve Advent of Code day $(notdir $(PWD))" --license PublicDomain --main-is src/Main.hs --cabal-version '2.0'
