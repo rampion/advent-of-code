@@ -15,8 +15,9 @@ run: $(BINS)
 $(RUST_BIN): Cargo.toml src/main.rs
 	cargo build
 
-Cargo.toml:
+Cargo.toml src/Main.rs &:
 	cargo init --name solve
+	git add Cargo.toml src/main.rs
 
 $(HASKELL_BIN): src/Main.hs solve-aoc.cabal | dist-newstyle/bin/
 	cabal build
@@ -24,6 +25,7 @@ $(HASKELL_BIN): src/Main.hs solve-aoc.cabal | dist-newstyle/bin/
 
 solve-aoc.cabal src/Main.hs &: | src/
 	cabal init --package-name solve-aoc --synopsis "Solve Advent of Code day $(notdir $(PWD))" --license PublicDomain --main-is src/Main.hs --cabal-version '2.0'
+	git add CHANGELOG.md Setup.hs solve-aoc.cabal src/Main.hs
 
 src/ dist-newstyle/bin/:
 	mkdir -p $@
