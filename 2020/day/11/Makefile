@@ -1,7 +1,7 @@
 HASKELL_BIN := dist-newstyle/bin/solve-aoc
 RUST_BIN := target/debug/solve
 
-BINS := ${HASKELL_BIN}
+BINS := ${HASKELL_BIN} ${RUST_BIN}
 INPUTS := $(wildcard data/*)
 
 define NEWLINE
