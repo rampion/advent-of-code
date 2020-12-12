@@ -1,8 +1,7 @@
 HASKELL_BIN := dist-newstyle/bin/solve-aoc
 RUST_BIN := target/debug/solve
 
-BINS := ${HASKELL_BIN}
-#${RUST_BIN}
+BINS := ${HASKELL_BIN} ${RUST_BIN}
 INPUTS := $(wildcard data/*)
 
 define NEWLINE
@@ -12,6 +11,9 @@ endef
 
 run: $(BINS)
 	$(foreach bin,$(BINS),$(bin) $(INPUTS)$(NEWLINE))
+
+clippy:
+	cargo clippy
 
 $(RUST_BIN): Cargo.toml src/main.rs
 	cargo build
