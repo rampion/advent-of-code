@@ -42,11 +42,9 @@ fn count_full(grid: Grid) -> usize {
     num_full
 }
 
-fn stabilize(
-    mut grid: Grid,
-    neighbors: fn(&Grid, Point) -> Vec<(Point, Tile)>,
-    threshold: usize,
-) -> Grid {
+type GridLookup = fn(&[Vec<Tile>], Point) -> Vec<(Point, Tile)>;
+
+fn stabilize(mut grid: Grid, neighbors: GridLookup, threshold: usize) -> Grid {
     use std::collections::HashSet;
 
     let mut queue = HashSet::new();
@@ -107,11 +105,7 @@ fn stabilize(
 }
 
 #[allow(unused)]
-fn slow_stabilize(
-    mut grid: Grid,
-    neighbors: fn(&Grid, Point) -> Vec<(Point, Tile)>,
-    threshold: usize,
-) -> Grid {
+fn slow_stabilize(mut grid: Grid, neighbors: GridLookup, threshold: usize) -> Grid {
     let height = grid.len();
     let width = grid[0].len();
     let mut unstable = true;
@@ -142,7 +136,7 @@ fn slow_stabilize(
             }
         }
 
-        unstable = updates.len() > 0;
+        unstable = !updates.is_empty();
 
         for ((x, y), tile) in updates.into_iter() {
             grid[y][x] = tile;
@@ -163,7 +157,7 @@ const DELTAS: [(i64, i64); 8] = [
     (1, 1),
 ];
 
-fn adjacent(grid: &Grid, (x, y): Point) -> Vec<(Point, Tile)> {
+fn adjacent(grid: &[Vec<Tile>], (x, y): Point) -> Vec<(Point, Tile)> {
     let height = grid.len() as i64;
     let width = grid[0].len() as i64;
 
@@ -183,7 +177,7 @@ fn adjacent(grid: &Grid, (x, y): Point) -> Vec<(Point, Tile)> {
         .collect()
 }
 
-fn visible(grid: &Grid, (x, y): Point) -> Vec<(Point, Tile)> {
+fn visible(grid: &[Vec<Tile>], (x, y): Point) -> Vec<(Point, Tile)> {
     let height = grid.len() as i64;
     let width = grid[0].len() as i64;
 
