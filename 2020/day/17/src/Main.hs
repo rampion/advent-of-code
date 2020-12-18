@@ -1,17 +1,19 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wall -Wextra -Werror -Wno-name-shadowing #-}
 
-module Main where
+module Main (main) where
 
 import Data.Foldable (traverse_)
 import Data.List (intercalate, transpose)
@@ -25,6 +27,11 @@ main =
 
     initial <- parsePlane <$> readFile filename
 
+    {-
+    putStrLn "\tpart 0: active cubes after six cycles using 2 dimensions"
+    putStrLn $ "\t" ++ show (part0 initial)
+    -}
+
     putStrLn "\tpart 1: active cubes after six cycles"
     putStrLn $ "\t" ++ show (part1 initial)
 
@@ -34,47 +41,55 @@ main =
 --------------------------------------------------------------------------------
 
 part2 :: Grid n Cell -> Int
-part2 = part1 . Dimension . return
+part2 = part1 . embed
 
 part1 :: Grid n Cell -> Int
-part1 = popCount . flatten . (!! 6) . iterate step . Dimension . return
+part1 = part0 . embed
+
+part0 :: Grid n Cell -> Int
+part0 = popCount . flatten . (!! 6) . iterate step
+
+embed :: Grid n a -> Grid ('Succ n) a
+embed = Dimension . (: [])
 
 popCount :: [Cell] -> Int
 popCount = length . filter id
-
-step :: Grid n Cell -> Grid n Cell
-step = fmap rule . neighborhoods . expand
-
-rule :: Neighborhood Cell -> Cell
-rule Neighborhood {focus, neighbors}
-  | focus = popCount neighbors `elem` [2, 3]
-  | otherwise = popCount neighbors == 3
-
-consWith3 :: (a -> a -> a -> b) -> [a] -> [b]
-consWith3 f = zipWith3 f <*> drop 1 <*> drop 2
 
 flatten :: Grid n a -> [a]
 flatten (Point a) = [a]
 flatten (Dimension as) = concatMap flatten as
 
-neighborhoods :: Grid n a -> Grid n (Neighborhood a)
-neighborhoods (Point a) = Point $ Neighborhood {focus = a, neighbors = []}
-neighborhoods (Dimension as) = Dimension $ consWith3 combine (neighborhoods <$> as)
-  where
-    combine :: Grid n (Neighborhood a) -> Grid n (Neighborhood a) -> Grid n (Neighborhood a) -> Grid n (Neighborhood a)
-    combine (Point a) (Point b) (Point c) =
-      Point $
-        Neighborhood
-          { focus = focus b,
-            neighbors = [focus a, focus c] ++ neighbors a ++ neighbors b ++ neighbors c
-          }
-    combine (Dimension as) (Dimension bs) (Dimension cs) = Dimension (zipWith3 combine as bs cs)
+step :: Grid n Cell -> Grid n Cell
+step = fmap rule . neighborhoods
 
-expand :: Grid n Cell -> Grid n Cell
-expand (Dimension (map expand -> as@(a : _))) = Dimension (z : z : as ++ [z, z])
+rule :: Neighborhood -> Cell
+rule Neighborhood {focus, livingNeighbors}
+  | focus = 2 <= livingNeighbors && livingNeighbors <= 3
+  | otherwise = livingNeighbors == 3
+
+neighborhoods :: Grid n Cell -> Grid n Neighborhood
+neighborhoods = \case
+  Point a -> Point $ Neighborhood {focus = a, livingNeighbors = 0}
+  Dimension as -> Dimension case fmap neighborhoods as of
+    [] -> []
+    [b] -> let a = boundary b in [a, b, a]
+    (b : c : ds) -> boundary b : (b `addNeighbors` c) : loop b c ds
   where
-    z = False <$ a
-expand grid = grid
+    loop a b [] = [b `addNeighbors` a, boundary b]
+    loop a b (c : ds) = (b `addNeighbors` a `addNeighbors` c) : loop b c ds
+
+boundary :: Grid n Neighborhood -> Grid n Neighborhood
+boundary = fmap \Neighborhood {focus, livingNeighbors} ->
+  Neighborhood False (popCount [focus] + livingNeighbors)
+
+addNeighbors :: Grid n Neighborhood -> Grid n Neighborhood -> Grid n Neighborhood
+Dimension xs `addNeighbors` Dimension ys = Dimension (zipWith addNeighbors xs ys)
+Point x `addNeighbors` Point y =
+  Point $
+    Neighborhood
+      { focus = focus x,
+        livingNeighbors = popCount [focus y] + livingNeighbors y + livingNeighbors x
+      }
 
 --------------------------------------------------------------------------------
 
@@ -88,7 +103,7 @@ parseCell ch = error $ "illegal cell: " ++ show ch
 
 --------------------------------------------------------------------------------
 
-data Neighborhood a = Neighborhood {focus :: a, neighbors :: [a]}
+data Neighborhood = Neighborhood {focus :: Bool, livingNeighbors :: Int}
 
 data Nat = Zero | Succ Nat
 
@@ -108,18 +123,21 @@ deriving instance Functor (Grid n)
 
 type Cell = Bool
 
+instance Show (Grid 'Zero Neighborhood) where
+  show (Point (Neighborhood _ c)) = show c
+
 instance Show (Grid 'Zero Cell) where
   show (Point False) = "."
   show (Point True) = "#"
 
-instance Show (Grid One Cell) where
+instance Show (Grid 'Zero a) => Show (Grid One a) where
   show (Dimension as) = show =<< as
 
-instance Show (Grid Two Cell) where
+instance Show (Grid One a) => Show (Grid Two a) where
   show (Dimension as) = unlines (show <$> as)
 
-instance Show (Grid Three Cell) where
+instance Show (Grid Two a) => Show (Grid Three a) where
   show (Dimension as) = unlines . fmap (intercalate " ") . transpose $ fmap (lines . show) as
 
-instance Show (Grid Four Cell) where
+instance Show (Grid Three a) => Show (Grid Four a) where
   show (Dimension as) = intercalate "\n\n" $ fmap show as
