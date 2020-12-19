@@ -1,0 +1,302 @@
+0 : aaaaabbaabaaaaababaa, 8 11
+8 : aaaaabbaabaaaaababaa, (42 | 42 8) 11
+< 42: aaaaabbaabaaaaababaa, (9 14 | 10 1) 11
+  < 9 : aaaaabbaabaaaaababaa, (14 27 | 1 26) 14 11
+    < 14: ✗aaaabbaabaaaaababaa, 27 14 11
+    > 1 : ✓aaaabbaabaaaaababaa, 26 14 11
+      26: aaaabbaabaaaaababaa, (14 22 | 1 20) 14 11
+      < 14: ✗aaabbaabaaaaababaa, 22 14 11
+      > 1 : ✓aaabbaabaaaaababaa, 20 14 11
+        20: aaabbaabaaaaababaa, (14 14 | 1 15) 14 11
+        < 14: ✗aabbaabaaaaababaa, 14 14 11
+        > 1 : ✓aabbaabaaaaababaa, 15 14 11
+          15: aabbaabaaaaababaa, (1 | 14) 14 11
+          < 1 : ✓abbaabaaaaababaa, 14 11
+            14: ✗bbaabaaaaababaa, 11
+          > 14: ✗abbaabaaaaababaa, 14 11
+  > 10: aaaaabbaabaaaaababaa, (23 14 | 28 1) 1 11
+    < 23: aaaaabbaabaaaaababaa, (25 1 | 22 14) 14 1 11
+      < 25: aaaaabbaabaaaaababaa, (1 1 | 1 14) 1 14 1 11
+        < 1 : ✓aaaabbaabaaaaababaa, 1 1 14 1 11
+          1 : ✓aaabbaabaaaaababaa, 1 14 1 11
+          1 : ✓aabbaabaaaaababaa, 14 1 11
+          14: ✗abbaabaaaaababaa, 1 11
+        > 1 : ✓aaaabbaabaaaaababaa, 14 1 14 1 11
+          14: ✗aaabbaabaaaaababaa, 1 14 1 11
+      > 22: aaaaabbaabaaaaababaa, 14 14 14 14 1 11
+        14: ✗aaaabbaabaaaaababaa, 14 14 14 1 11
+    > 28: aaaaabbaabaaaaababaa, 16 1 1 1 11
+      16: aaaaabbaabaaaaababaa, (15 1 | 14 14) 1 1 1 11
+      < 15: aaaaabbaabaaaaababaa, (1 | 14) 1 1 1 1 11
+        < 1 : ✓aaaabbaabaaaaababaa, 1 1 1 1 11
+          1 : ✓aaabbaabaaaaababaa, 1 1 1 11
+          1 : ✓aabbaabaaaaababaa, 1 1 11
+          1 : ✓abbaabaaaaababaa, 1 11
+          1 : ✓bbaabaaaaababaa, 11
+          11: bbaabaaaaababaa, (42 31 | 42 11 31)
+          < 42: bbaabaaaaababaa, (9 14 | 10 1) 31
+            < 9 : bbaabaaaaababaa, (14 27 | 1 26) 14 31
+              < 14: ✓baabaaaaababaa, 27 14 31
+                27: baabaaaaababaa, (1 6 | 14 18) 14 31
+                < 1 : ✗aabaaaaababaa, 6 14 31
+                > 14: ✓aabaaaaababaa, 18 14 31
+                  18: aabaaaaababaa, 15 15 14 31
+                  15: aabaaaaababaa, (1 | 14) 15 14 31
+                    < 1 : ✓abaaaaababaa, 15 14 31
+                      15: abaaaaababaa, (1 | 14) 14 31
+                      < 1 : ✓baaaaababaa, 14 31
+                        14: ✓aaaaababaa, 31
+                        31: aaaaababaa, (14 17 | 1 13)
+                        < 14: ✗aaaababaa, 17
+                        > 1 : ✓aaaababaa, 13
+                          13: aaaababaa, (14 3 | 1 12)
+                          < 14: ✗aaababaa, 3
+                          > 1 : ✓aaababaa, 12
+                            12: aaababaa, (24 14 | 19 1)
+                            < 24: aaababaa, 14 1 14
+                              14: ✗aababaa, 1 14
+                            > 19: aaababaa, (14 1 | 14 14) 1
+                              < 14: ✗aababaa, 14 1 1
+                              > 14: ✗aababaa, 14 14 1
+                      > 14: ✗baaaaababaa, 14 31
+                    > 14: ✗abaaaaababaa, 15 14 31
+              > 1 : ✗baabaaaaababaa, 26 14 31
+            > 10: bbaabaaaaababaa, (23 14 | 28 1) 1 31
+              < 23: bbaabaaaaababaa, (25 1 | 22 14) 14 1 31
+                < 25: bbaabaaaaababaa, (1 1 | 1 14) 1 14 1 31
+                  < 1 : ✗baabaaaaababaa, 1 1 14 1 31
+                  > 1 : ✗baabaaaaababaa, 14 1 14 1 31
+                > 22: bbaabaaaaababaa, 14 14 14 14 1 31
+                  14: ✓baabaaaaababaa, 14 14 14 1 31
+                  14: ✓aabaaaaababaa, 14 14 1 31
+                  14: ✗abaaaaababaa, 14 1 31
+              > 28: bbaabaaaaababaa, 16 1 1 1 31
+                16: bbaabaaaaababaa, (15 1 | 14 14) 1 1 1 31
+                < 15: bbaabaaaaababaa, (1 | 14) 1 1 1 1 31
+                  < 1 : ✗baabaaaaababaa, 1 1 1 1 31
+                  > 14: ✓baabaaaaababaa, 1 1 1 1 31
+                    1 : ✗aabaaaaababaa, 1 1 1 31
+                > 14: ✓baabaaaaababaa, 14 1 1 1 31
+                  14: ✓aabaaaaababaa, 1 1 1 31
+                  1 : ✓abaaaaababaa, 1 1 31
+                  1 : ✓baaaaababaa, 1 31
+                  1 : ✗aaaaababaa, 31
+          < 42: bbaabaaaaababaa, (9 14 | 10 1) 11 31
+            < 9 : bbaabaaaaababaa, (14 27 | 1 26) 14 11 31
+              < 14: ✓baabaaaaababaa, 27 14 11 31
+                27: baabaaaaababaa, (1 6 | 14 18) 14 11 31
+                < 1 : ✗aabaaaaababaa, 6 14 11 31
+                > 14: ✓aabaaaaababaa, 18 14 11 31
+                  18: aabaaaaababaa, 15 15 14 11 31
+                  15: aabaaaaababaa, (1 | 14) 15 14 11 31
+                    < 1 : ✓abaaaaababaa, 15 14 11 31
+                      15: abaaaaababaa, (1 | 14) 14 11 31
+                      < 1 : ✓baaaaababaa, 14 11 31
+                        14: ✓aaaaababaa, 11 31
+                        11: aaaaababaa, (42 31 | 42 11 31) 31
+                        < 42: aaaaababaa, (9 14 | 10 1) 31 31
+                          < 9 : aaaaababaa, (14 27 | 1 26) 14 31 31
+                            < 14: ✗aaaababaa, 27 14 31 31
+                            > 1 : ✓aaaababaa, 26 14 31 31
+                              26: aaaababaa, (14 22 | 1 20) 14 31 31
+                              < 14: ✗aaababaa, 14 31 31
+                              > 1 : ✓aaababaa, 20 14 31 31
+                                20: aaababaa, (14 14 | 1 15) 14 31 31
+                                < 14: ✗ababaa, 14 14 31 31
+                                > 1 : ✓aababaa, 15 14 31 31
+                                  15: aababaa, (1 | 14) 14 31 31
+                                  < 1 : ✓ababaa, 14 31 31
+                                    14: ✗babaa, 31 31
+                                  > 14: ✗ababaa, 14 31 31
+                          > 10: aaaaababaa, (23 13 | 28 1) 1 31 31
+                            < 23: aaaaababaa, (25 1 | 22 14) 13 1 31 31
+                              < 25: aaaaababaa, 1 1 1 13 1 31 31
+                                1 : ✓aaaababaa, 1 1 13 1 31 31
+                                1 : ✓aaababaa, 1 13 1 31 31
+                                1 : ✓aababaa, 13 1 31 31
+                                1 : ✓ababaa, 13 1 31 31
+                                13: ababaa, (14 3 | 1 12) 1 31 31
+                                < 14: ✗babaa, 3 1 31 31
+                                > 1 : ✓babaa, 12 1 31 31
+                                  12: babaa, (24 14 | 19 1) 1 31 31
+                                  < 24: babaa, 14 1 14 1 31 31
+                                    14: ✓abaa, 1 14 1 31 31
+                                    1 : ✓baa, 14 1 31 31
+                                    14: ✓aa, 1 31 31
+                                    1 : ✓a, 31 31
+                                    31: a, (14 17 | 1 13) 31
+                                    < 14: ✗, 17 31
+                                    > 1 : ✓, 13 31
+                                      13: , (14 3 | 1 12) 31
+                                      < 14: ✗ 3 31
+                                      > 1 : ✗ 12 31
+                                  > 19: babaa, (14 1 | 14 14) 1 1 31 31
+                                    < 14: ✓abaa, 1 1 1 31 31
+                                      1 : ✓baa, 1 1 31 31
+                                      1 : ✗aa, 1 31 31
+                                    > 14: ✓abaa, 14 1 1 31 31
+                                      14: ✗baa, 1 1 31 31
+                              > 22: aaaaababaa, 14 14 14 13 1 31 31
+                                14: ✗aaaababaa, 14 14 13 1 31 31
+                            > 28: aaaaababaa, 16 1 1 1 31 31
+                              16: aaaaababaa, (15 1 | 14 14) 1 1 1 31 31
+                              < 15: aaaaababaa, (1 | 14) 1 1 1 1 31 31
+                                < 1 : ✓aaaababaa, 1 1 1 1 31 31
+                                  1 : ✓aaababaa, 1 1 1 31 31
+                                  1 : ✓aababaa, 1 1 31 31
+                                  1 : ✓ababaa, 1 31 31
+                                  1 : ✓babaa, 31 31
+                                  31: babaa, (14 17 | 1 13) 31
+                                  < 14: ✓abaa, 17 31
+                                    17: abaa, (14 2 | 1 7) 31
+                                    < 14: ✗baa, 2 31
+                                    > 1 : ✓baa, 7 31
+                                      7 : baa, (14 5 | 1 21) 31
+                                      < 14: ✓aa, 5 31
+                                        5 : aa, (1 14 | 15 1) 31
+                                        < 1 : ✓a, 14 31
+                                          14: ✗, 31
+                                        > 15: aa, (1 | 14) 1 31
+                                          < 1 : ✓a, 1 31
+                                            1 : ✓, 31
+                                            31: , (14 17 | 1 13)
+                                            < 14: ✗ 17
+                                            > 1 : ✗ 13
+                                          > 14: ✗a, 1 31
+                                      > 1 : ✗aa, 21 31
+                                  > 1: ✗abaa, 13 31
+                                > 14 : ✗aaaababaa, 1 1 1 1 31 31
+                      > 14: ✗baaaaababaa, 14 11 31
+                    > 14: ✗abaaaaababaa, 15 14 11 31
+              > 1 : ✗baabaaaaababaa, 26 14 11 31
+            > 10: bbaabaaaaababaa, (23 14 | 28 1) 1 11 31
+              < 23: bbaabaaaaababaa, (25 1 | 22 14) 14 1 11 31
+                < 25: bbaabaaaaababaa, (1 1 | 1 14) 1 14 1 11 31
+                  < 1 : ✗baabaaaaababaa, 1 1 14 1 11 31
+                  > 1 : ✗baabaaaaababaa, 14 1 14 1 11 31
+                > 22: bbaabaaaaababaa, 14 14 14 14 1 11 31
+                  14: ✓baabaaaaababaa, 14 14 14 1 11 31
+                  14: ✓aabaaaaababaa, 14 14 1 11 31
+                  14: ✗abaaaaababaa, 14 1 11 31
+              > 28: bbaabaaaaababaa, 16 1 1 1 11 31
+                16: bbaabaaaaababaa, (15 1 | 14 14) 1 1 1 11 31
+                < 15: bbaabaaaaababaa, (1 | 14) 1 1 1 1 11 31
+                  < 1 : ✗baabaaaaababaa, 1 1 1 1 11 31
+                  > 14: ✓baabaaaaababaa, 1 1 1 1 11 31
+                    1 : ✗aabaaaaababaa, 1 1 1 11 31
+                > 14: ✓baabaaaaababaa, 14 1 1 1 11 31
+                  14: ✓aabaaaaababaa, 1 1 1 11 31
+                  1 : ✓abaaaaababaa, 1 1 11 31
+                  1 : ✓baaaaababaa, 1 11 31
+                  1 : ✗aaaaababaa, 11 31
+        > 14: ✗aaaabbaabaaaaababaa, 1 1 1 1 11
+      > 14: ✗aaaabbaabaaaaababaa, 14 1 1 1 11
+> 42: aaaaabbaabaaaaababaa, (9 14 | 10 1) 8 11
+  < 9 : aaaaabbaabaaaaababaa, (14 27 | 1 26) 14 8 11
+    < 14: ✗aaaabbaabaaaaababaa, 27 14 8 11
+    > 1 : ✓aaaabbaabaaaaababaa, 26 14 8 11
+      26: aaaabbaabaaaaababaa, (14 22 | 1 20) 14 8 11
+      < 14: ✗aaabbaabaaaaababaa, 22 14 8 11
+      > 1 : ✓aaabbaabaaaaababaa, 20 14 8 11
+        20: aaabbaabaaaaababaa, (14 14 | 1 15) 14 8 11
+        < 14: ✗aabbaabaaaaababaa, 14 14 8 11
+        > 1 : ✓aabbaabaaaaababaa, 15 14 8 11
+          15: aabbaabaaaaababaa, (1 | 14) 14 8 11
+          < 1 : ✓abbaabaaaaababaa, 14 8 11
+            14: ✗bbaabaaaaababaa, 8 11
+          > 14: ✗abbaabaaaaababaa, 14 8 11
+  > 10: aaaaabbaabaaaaababaa, (23 14 | 28 1) 1 8 11
+    < 23: aaaaabbaabaaaaababaa, (25 1 | 22 14) 14 1 8 11
+      < 25: aaaaabbaabaaaaababaa, (1 1 | 1 14) 1 14 1 8 11
+        < 1 : ✓aaaabbaabaaaaababaa, 1 1 14 1 8 11
+          1 : ✓aaabbaabaaaaababaa, 1 14 1 8 11
+          1 : ✓aabbaabaaaaababaa, 14 1 8 11
+          14: ✗abbaabaaaaababaa, 1 8 11
+        > 1 : ✓aaaabbaabaaaaababaa, 14 1 14 1 8 11
+          14: ✗aaabbaabaaaaababaa, 1 14 1 8 11
+      > 22: aaaaabbaabaaaaababaa, 14 14 14 14 1 8 11
+        14: ✗aaaabbaabaaaaababaa, 14 14 14 1 8 11
+    > 28: aaaaabbaabaaaaababaa, 16 1 1 1 8 11
+      16: aaaaabbaabaaaaababaa, (15 1 | 14 14) 1 1 1 8 11
+      < 15: aaaaabbaabaaaaababaa, (1 | 14) 1 1 1 1 8 11
+        < 1 : ✓aaaabbaabaaaaababaa, 1 1 1 1 8 11
+          1 : ✓aaabbaabaaaaababaa, 1 1 1 8 11
+          1 : ✓aabbaabaaaaababaa, 1 1 8 11
+          1 : ✓abbaabaaaaababaa, 1 8 11
+          1 : ✓bbaabaaaaababaa, 8 11
+          8 : bbaabaaaaababaa, (42 | 42 8) 11
+          < 42: bbaabaaaaababaa, (9 14 | 10 1) 11
+            < 9 : bbaabaaaaababaa, (14 27 | 1 26) 14 11
+              < 14: ✓baabaaaaababaa, 27 14 11
+                27: baabaaaaababaa, (1 6 | 14 18) 14 11
+                < 1 : ✗aabaaaaababaa, 6 14 11
+                > 14: ✓aabaaaaababaa, 18 14 11
+                  18: aabaaaaababaa, 15 15 14 11
+                  15: aabaaaaababaa, (1 | 14) 15 14 11
+                  < 1 : ✓abaaaaababaa, 15 14 11
+                    15: abaaaaababaa, (1 | 14) 14 11
+                    < 1 : ✓baaaaababaa, 14 11
+                      14: ✓aaaaababaa, 14 11
+                      11: aaaaababaa, (42 31 | 42 11 31)
+                      < 42: aaaaababaa, (9 14 | 10 1) 31
+                        < 9 : aaaaababaa, (14 27 | 1 26) 14 31
+                          < 14: ✗aaaababaa, 27 14 31
+                          > 1 : ✓aaaababaa, 26 14 31
+                            26: aaaababaa, (14 22 | 1 20) 14 31
+                            < 14: ✗aaababaa, 22 14 31
+                            > 1 : ✓aaababaa, 20 14 31
+                              20: aaababaa, (14 14 | 1 15) 14 31
+                              < 14: ✗aababaa, 14 14 31
+                              > 1 : ✓aababaa, 15 14 31
+                                15: aababaa, (1 | 14) 14 31
+                                < 1 : ✓ababaa, 14 31
+                                  14: ✗babaa, 31
+                                > 14: ✗ababaa, 14 31
+                        > 10: aaaaababaa, (23 14 | 28 1) 1 31
+                          < 23: aaaaababaa, 25 1 14 1 31
+                            25: aaaaababaa, (1 1 | 1 14) 1 14 1 31
+                            < 1 : ✓aaaababaa, 1 1 14 1 31
+                              1 : ✓aaababaa, 1 14 1 31
+                              1 : ✓aababaa, 14 1 31
+                              14: ✗ababaa, 1 31
+                            > 1 : ✓aaaababaa, 14 1 14 1 31
+                              14: ✗aaababaa, 1 14 1 31
+                          > 28: aaaaababaa, 16 1 1 1 31
+                            16: aaaaababaa, (15 1 | 14 14) 1 1 1 31
+                            < 15: aaaaababaa, (1 | 14) 1 1 1 1 31
+                              < 1 : ✓aaaababaa, 1 1 1 1 31
+                                1 : ✓aaababaa, 1 1 1 31
+                                1 : ✓aababaa, 1 1 31
+                                1 : ✓ababaa, 1 31
+                                1 : ✓babaa, 31
+                                1 : ✓babaa, 31
+                                31: babaa, (14 17 | 1 13)
+                                < 14: ✓abaa, 17
+                                  17: abaa, (14 2 | 1 7)
+                                  < 14: ✗baa, 2
+                                  > 1 : ✓baa, 7
+                                    7 : baa, (14 5 | 1 21)
+                                    < 14: ✓aa, 5
+                                      5 : aa, (1 14 | 15 1)
+                                      < 1 : ✓a, 14
+                                        14: ✗,
+                                      > 15: aa, (1 | 14) 1
+                                        < 1 : ✓a, 1
+                                          1 : ✓,
+                                          ,,,,,,,,,,,,,,,,,,
+                                        > 14: ✗a, 1
+                                    > 1 : ✗aa, 21
+                                > 1: ✗abaa, 13
+                              > 14: ✗aaaababaa, 1 1 1 1 31
+                            > 14: ✗aaaababaa, 14 1 1 1 31
+                      > 42: aaaaababaa, (9 14 | 10 1) 11 31
+                        ...
+                    > 14: ✗baaaaababaa, 14 11
+                  > 14: ✗abaaaaababaa, 15 14 11
+              > 1 : ✗baabaaaaababaa, 26 14 11
+            > 10: bbaabaaaaababaa, (23 14 | 28 1) 1 11
+              ...
+          > 42: bbaabaaaaababaa, (9 14 | 10 1) 8 11
+            ...
+        > 14: ✗aaaabbaabaaaaababaa, 1 1 1 1 8 11
+      > 14: ✗aaaabbaabaaaaababaa, 14 1 1 1 8 11
