@@ -7,9 +7,10 @@
 module Main where
 
 import Control.Applicative ((<|>))
--- import Control.Arrow (left)
-import Data.Foldable (asum, traverse_)
+import Control.Monad ((>=>))
+import Data.Foldable (traverse_)
 import Data.Functor.Identity (Identity)
+import Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import System.Environment (getArgs)
 import Text.Parsec hiding ((<|>))
@@ -17,12 +18,6 @@ import Text.Parsec.String (parseFromFile)
 
 main :: IO ()
 main = do
-  let filename = "data/example-2"
-  (rules, _) <- either (fail . show) (return . updateRulesEightAndEleven) =<< parseFromFile scenario filename
-  print $ matchRule0'' rules "aaaaabbaabaaaaababaa"
-
-main_ :: IO ()
-main_ =
   getArgs >>= traverse_ \filename -> do
     putStrLn filename
 
@@ -34,76 +29,9 @@ main_ =
     putStrLn $ "\t" ++ check part1 expected1 ++ " " ++ show part1
 
     putStrLn "\tpart 2: Number of messages that completely match rule 0 with updated rules 8 and 11"
-    let part2 = countMatchRule0' (updateRulesEightAndEleven scenario)
+    let part2 = countMatchRule0 (updateRulesEightAndEleven scenario)
     expected2 <- parseExpected (filename ++ ".part2")
-    putStrLn $ "\t" ++ check part2 expected2 ++ " " ++ show part1
-
---------------------------------------------------------------------------------
-
-type NewParser a = a -> (String -> a) -> String -> a
-
-matchRule0'' :: [Rule] -> Message -> (Maybe String)
-matchRule0'' = \rules -> build0 rules Nothing Just
-  where
-    build0 :: [Rule] -> NewParser a
-    build0 rules = let built = IntMap.fromList $ map (fmap $ toParser built) rules in built IntMap.! 0
-
-    toParser :: IntMap.IntMap (NewParser a) -> Expression -> NewParser a
-    toParser _ (Literal expected) = \nothing just -> \case
-      actual : rest | expected == actual -> just rest
-      _ -> nothing
-    toParser rules (Pattern ps) =
-      oneOf (allOf . map (rules IntMap.!) <$> ps)
-
-    oneOf :: [NewParser a] -> NewParser a
-    oneOf [] nothing _just = const nothing
-    oneOf (p : ps) nothing just = \str -> p (oneOf ps nothing just str) just str
-
-    allOf [15 14]
-    allOf [oneOf [1,14] 14]
-    allOf [(\nothing just str -> 1 (oneOf [14] nothing just str) just str), 14]
-    \nothing just str -> 1 (oneOf [14] nothing just str) (allOf [14] nothing just):wa
-
-
-
-
-    allOf :: [NewParser a] -> NewParser a
-    allOf [] _nothing just = just
-    allOf (p : ps) nothing just = p nothing (allOf ps nothing just)
-
-{-
-type Parser'' = [Index] -> String -> IO (Maybe String)
-
-matchRule0'' :: [Rule] -> Message -> IO (Maybe String)
-matchRule0'' = \rules -> build0 rules []
-  where
-    build0 :: [Rule] -> Parser''
-    build0 rules = let built = IntMap.fromList $ map (uncurry $ toParser built) rules in built IntMap.! 0
-
-    toParser :: IntMap.IntMap Parser'' -> Index -> Expression -> (Index, Parser'')
-    toParser _ ix (Literal expected) = (,) ix \ixs str -> do
-      putStrLn $ show ix ++ ": " ++ check (take 1 str) (Just [expected]) ++ show (tail str) ++ ", " ++ show ixs
-      return case str of
-        actual : rest | expected == actual -> Just rest
-        _ -> Nothing
-    toParser rules ix (Pattern ps) = (,) ix \ixs str -> do
-      putStrLn $ show ix ++ ": " ++ show str ++ ", " ++ show ps ++ " " ++ show ixs
-      oneOf (allOf . map (\ix -> (ix, rules IntMap.! ix)) <$> ps) ixs str
-
-    oneOf :: [Parser''] -> Parser''
-    oneOf [] _ixs _str = return Nothing
-    oneOf (p : ps) ixs str =
-      p ixs str >>= \case
-        Nothing -> oneOf ps ixs str
-        r -> return r
-
-    allOf :: [(Index, Parser'')] -> Parser''
-    allOf [] _ixs str = return (Just str)
-    allOf ((_ix, p) : ps) ixs str =
-      p (map fst ps ++ ixs) str >>= \case
-        Just str -> allOf ps ixs str
-        Nothing -> return Nothing
--}
+    putStrLn $ "\t" ++ check part2 expected2 ++ " " ++ show part2
 
 --------------------------------------------------------------------------------
 
@@ -114,53 +42,33 @@ updateRulesEightAndEleven (rules, messages) = (map replace rules, messages)
     replace (11, _) = (11, Pattern [[42, 31], [42, 11, 31]])
     replace r = r
 
-countMatchRule0' :: Scenario -> Int
-countMatchRule0' = length . matchRule0'
-
-matchRule0' :: Scenario -> [Message]
-matchRule0' = \(rules, messages) -> filter (match0 rules) messages
-  where
-    match0 :: [Rule] -> Message -> Bool
-    match0 rules = maybe False null . build0 rules
-
-    build0 :: [Rule] -> Parser'
-    build0 rules = let built = IntMap.fromList $ map (toParser built <$>) rules in built IntMap.! 0
-
-    toParser :: IntMap.IntMap Parser' -> Expression -> Parser'
-    toParser _ (Literal expected) = \case
-      actual : rest | expected == actual -> Just rest
-      _ -> Nothing
-    toParser rules (Pattern ps) = oneOf (allOf . map (rules IntMap.!) <$> ps)
-
-    oneOf :: [Parser'] -> Parser'
-    oneOf [] = const Nothing
-    oneOf (p : ps) = \s -> p s <|> oneOf ps s
-
-    allOf :: [Parser'] -> Parser'
-    allOf [] = Just
-    allOf (p : ps) = \s -> p s >>= allOf ps
-
-type Parser' = String -> Maybe String
-
 --------------------------------------------------------------------------------
 
 countMatchRule0 :: Scenario -> Int
-countMatchRule0 = length . matchRule0
+countMatchRule0 (rules, messages) = length $ filter (any null . matchRule0 rules) messages
 
-matchRule0 :: Scenario -> [Message]
-matchRule0 = \(rules, messages) -> filter (match0 rules) messages
+type Nondeterministic = String -> [String]
+
+matchRule0 :: [Rule] -> Message -> [String]
+matchRule0 = build0
   where
-    match0 :: [Rule] -> Message -> Bool
-    match0 rules = either (const False) (const True) . (parse (build rules IntMap.! 0 <* eof) "message")
+    build0 :: [Rule] -> Nondeterministic
+    build0 rules = built IntMap.! 0
+      where
+        built = IntMap.fromList $ map (fmap $ toParser built) rules
 
-    build :: Stream s Identity Char => [Rule] -> IntMap.IntMap (Parsec s () Message)
-    build rules = let built = IntMap.fromList $ map (toParser built <$>) rules in built
+    toParser :: IntMap Nondeterministic -> Expression -> Nondeterministic
+    toParser _ (Literal expected) = \case
+      (actual : rest) | expected == actual -> return rest
+      _ -> []
+    toParser rules (Pattern ps) = oneOf (allOf . map (rules IntMap.!) <$> ps)
 
-    toParser :: Stream s Identity Char => IntMap.IntMap (Parsec s () Message) -> Expression -> Parsec s () Message
-    toParser _ (Literal c) = string [c]
-    toParser rules (Pattern ps) = asum [try $ concat <$> traverse (rules IntMap.!) p | p <- ps]
+    oneOf :: [Nondeterministic] -> Nondeterministic
+    oneOf ps = concat . sequence ps
 
---
+    allOf :: [Nondeterministic] -> Nondeterministic
+    allOf = foldr (>=>) return
+
 --------------------------------------------------------------------------------
 
 scenario :: Parser Scenario
