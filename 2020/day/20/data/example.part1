@@ -1,0 +1,5 @@
+20899048083289
+
+To check that you've assembled the image correctly, multiply the IDs of the
+four corner tiles together. If you do this with the assembled tiles from the
+example above, you get 1951 * 3079 * 2971 * 1171 = 20899048083289
