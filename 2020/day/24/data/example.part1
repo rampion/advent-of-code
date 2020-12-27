@@ -1,0 +1,4 @@
+10
+In the above example, 10 tiles are flipped once (to black), and 5 more are
+flipped twice (to black, then back to white). After all of these instructions
+have been followed, a total of 10 tiles are black.
