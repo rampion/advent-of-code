@@ -19,6 +19,6 @@ executable solve-aoc
   -- other-modules:
   -- other-extensions:
   build-depends:       base ^>=4.13.0.0
-                      ,vector ^>=0.12.1.2
+                      ,containers ^>=0.6.2.1
   -- hs-source-dirs:
   default-language:    Haskell2010
