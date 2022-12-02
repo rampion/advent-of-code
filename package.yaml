@@ -8,7 +8,7 @@ library:
   source-dirs: app
 
 executables:
-  hello:
+  advent-of-code:
     main: app/Main.hs
 
 # from https://medium.com/mercury-bank/enable-all-the-warnings-a0517bc081c3

@@ -34,12 +34,12 @@
         in
         {
           packages = rec {
-            default = sample;
-            sample = pkgs.haskell.packages.${ghcVer}.sample;
+            default = advent-of-code;
+            advent-of-code = pkgs.haskell.packages.${ghcVer}.advent-of-code;
           };
 
           checks = {
-            inherit (self.packages.${system}) sample;
+            inherit (self.packages.${system}) advent-of-code;
           };
 
           # for debugging
@@ -49,7 +49,7 @@
             let haskellPackages = pkgs.haskell.packages.${ghcVer};
             in
             haskellPackages.shellFor {
-              packages = p: [ self.packages.${system}.sample ];
+              packages = p: [ self.packages.${system}.advent-of-code ];
               withHoogle = true;
               buildInputs = with haskellPackages; [
                 haskell-language-server
@@ -71,7 +71,7 @@
         default = makeHaskellOverlay (prev: hfinal: hprev:
           let hlib = prev.haskell.lib; in
           {
-            sample = hprev.callCabal2nix "sample" ./. { };
+            advent-of-code = hprev.callCabal2nix "advent-of-code" ./. { };
 
             # here's how to do hacks to the package set
             # don't run the test suite
