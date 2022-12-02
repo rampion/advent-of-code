@@ -1,15 +1,27 @@
-name: sample
-version: 0.0.0
-synopsis: Sample Haskell project
+name: advent-of-code
+version: 1.0.0
+synopsis: Advent of Code solver
 dependencies:
   - base >= 4.9 && <5
-
-library:
-  source-dirs: app
+  - optparse-generic >= 1.4.8 && <2
+  - containers >= 0.6.4.1 && <0.7.0
+  - parsec
 
 executables:
   advent-of-code:
-    main: app/Main.hs
+    main: Main.hs
+    source-dirs:
+      - src
+      - app
+
+tests:
+  test:
+    main: Main.hs
+    source-dirs:
+      - src
+      - test
+    dependencies:
+      - hspec
 
 # from https://medium.com/mercury-bank/enable-all-the-warnings-a0517bc081c3
 ghc-options:
@@ -25,7 +37,8 @@ ghc-options:
   - -Wno-missing-safe-haskell-mode # Cabal isn’t setting this currently (introduced in GHC 8.10)
   - -Wno-prepositive-qualified-module # Cabal’s generate Path_*.hs doesn’t do this (fixed in https://github.com/haskell/cabal/pull/7352)
   - -Wno-unused-packages # Some tooling gives this error
-  - -Wno-missing-kind-signatures # Warns literally every type
+    # not supported
+    # - -Wno-missing-kind-signatures # Warns literally every type
 
 default-extensions:
   - AllowAmbiguousTypes
