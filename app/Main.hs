@@ -19,6 +19,10 @@ import Data.ByteString.Lazy qualified as LBS
 data App = App String (Maybe Part)
   deriving stock (Generic, Show)
 
+-- TODO: make sure path matches YYYY/day/DD
+-- TODO: make the input/YYYY/day directory
+-- TODO: ask for a cookie
+
 instance ParseRecord App
 
 data Part = Part1 | Part2
