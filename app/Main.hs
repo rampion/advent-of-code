@@ -6,7 +6,7 @@ import Options.Generic (ParseRecord, getRecord, Generic, ParseField)
 import Data.Map qualified as Map
 import Data.Maybe (fromMaybe)
 import System.Exit (die)
-import AdventOfCode (Solver(..), solvers)
+import AdventOfCode
 import Text.Parsec.String (parseFromFile)
 
 data App = App String (Maybe Part)
@@ -18,6 +18,12 @@ data Part = Part1 | Part2
   deriving stock (Read, Show, Generic)
 
 instance ParseField Part
+
+solvers :: Map.Map String Solver
+solvers = Map.fromList
+  [ ( "2022/day/1", Solver day1parser day1part1 day1part2)
+  , ( "2022/day/2", Solver day2parser day2part1 day2part2)
+  ]
 
 main :: IO ()
 main = do

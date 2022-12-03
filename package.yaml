@@ -6,6 +6,7 @@ dependencies:
   - optparse-generic >= 1.4.8 && <2
   - containers >= 0.6.4.1 && <0.7.0
   - parsec
+  - comonad
 
 executables:
   advent-of-code:
@@ -64,6 +65,7 @@ default-extensions:
   - MonoLocalBinds
   - MultiWayIf
   - NamedFieldPuns
+  - NoImplicitPrelude
   - NumericUnderscores
   - OverloadedStrings
   - PatternSynonyms

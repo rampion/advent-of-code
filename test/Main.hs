@@ -1,10 +1,10 @@
 module Main where
 
+import AdventOfCode
+import Control.Monad.IO.Class (liftIO)
 import Prelude
 import Test.Hspec
-import AdventOfCode
 import Text.Parsec.String (parseFromFile)
-import Control.Monad.IO.Class (liftIO)
 
 main :: IO ()
 main = hspec do
@@ -26,3 +26,20 @@ main = hspec do
 
     it "reports the correct output for part 2 of the example" do
       day1part2 exampleInput `shouldBe` 45000
+
+  describe "day2" do
+    let exampleInput =
+          [ (Rock, Y)
+          , (Paper, X)
+          , (Scissors, Z)
+          ]
+
+    it "can parse the example input" do
+      parsedInput <- liftIO do parseFromFile day2parser "test/input/day2"
+      parsedInput `shouldBe` Right exampleInput
+
+    it "reports the correct output for part 1 of the example" do
+      day2part1 exampleInput `shouldBe` 15
+
+    it "reports the correct output for part 2 of the example" do
+      day2part2 exampleInput `shouldBe` 12
