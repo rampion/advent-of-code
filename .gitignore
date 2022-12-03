@@ -4,3 +4,4 @@ ghcid.out.txt
 stack.yaml.lock
 tags
 *.cabal
+cookie

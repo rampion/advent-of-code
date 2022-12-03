@@ -3,8 +3,6 @@ version: 1.0.0
 synopsis: Advent of Code solver
 dependencies:
   - base >= 4.9 && <5
-  - optparse-generic >= 1.4.8 && <2
-  - containers >= 0.6.4.1 && <0.7.0
   - parsec
   - comonad
 
@@ -14,6 +12,14 @@ executables:
     source-dirs:
       - src
       - app
+    dependencies:
+      - bytestring
+      - containers >= 0.6.4.1 && <0.7.0
+      - optparse-generic >= 1.4.8 && <2
+      - directory
+      - http-client
+      - http-client-tls
+      - http-types
 
 tests:
   test:
