@@ -5,3 +5,4 @@ stack.yaml.lock
 tags
 *.cabal
 cookie
+input/
