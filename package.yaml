@@ -5,6 +5,7 @@ dependencies:
   - base >= 4.9 && <5
   - parsec
   - comonad
+  - containers >= 0.6.4.1 && <0.7.0
 
 executables:
   advent-of-code:
@@ -14,7 +15,6 @@ executables:
       - app
     dependencies:
       - bytestring
-      - containers >= 0.6.4.1 && <0.7.0
       - optparse-generic >= 1.4.8 && <2
       - directory
       - http-client
