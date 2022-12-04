@@ -3,13 +3,15 @@ module Main where
 import AdventOfCode
 import Control.Monad.Writer (WriterT(..), tell)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad (when)
 import Prelude
 import Test.Hspec
 import Text.Parsec.String (parseFromFile)
 import System.Directory (doesFileExist)
+import Data.Monoid (Endo(..), Dual(..))
 
 main :: IO ()
-main = runSpecs do
+main = runSpecs @LastSpec do
   describeIfAvailable "day1" \day1Input -> do
     let exampleInput =
           [ [1000, 2000, 3000]
@@ -359,23 +361,32 @@ main = runSpecs do
     it "reports the correct output for part 2 of the example" do
       day25part2 exampleInput `shouldBe` error "unknown"
 
-newtype SpecMonoid = SpecMonoid { getSpec :: Spec }
+runSpecs :: SpecMonoid m => WriterT m IO () -> IO ()
+runSpecs w = do
+  ( (), spec ) <- runWriterT w
+  hspec (fromSpecMonoid spec)
 
-instance Semigroup SpecMonoid where
-  SpecMonoid m <> SpecMonoid n = SpecMonoid (m *> n)
-
-instance Monoid SpecMonoid where
-  mempty = SpecMonoid (pure ())
-
-describeIfAvailable :: String -> (String -> SpecWith ()) -> WriterT SpecMonoid IO ()
+describeIfAvailable :: SpecMonoid m => String -> (String -> SpecWith ()) -> WriterT m IO ()
 describeIfAvailable day test = do
   let testInput = "test/input/" <> day
   inputExists <- liftIO do doesFileExist testInput
-  (tell . SpecMonoid) if inputExists
-    then describe day (test testInput)
-    else pure ()
+  when inputExists do
+    tell do toSpecMonoid do describe day (test testInput)
 
-runSpecs :: WriterT SpecMonoid IO () -> IO ()
-runSpecs w = do
-  ( (), SpecMonoid spec ) <- runWriterT w
-  hspec spec
+class Monoid m => SpecMonoid m where
+  toSpecMonoid :: Spec -> m
+  fromSpecMonoid :: m -> Spec
+
+newtype AllSpecs = AllSpecs (Spec -> Spec)
+  deriving (Semigroup, Monoid) via Endo Spec
+
+instance SpecMonoid AllSpecs where
+  toSpecMonoid spec = AllSpecs (*> spec)
+  fromSpecMonoid (AllSpecs m) = m do pure ()
+
+newtype LastSpec = LastSpec (Spec -> Spec)
+  deriving (Semigroup, Monoid) via Dual (Endo Spec)
+
+instance SpecMonoid LastSpec where
+  toSpecMonoid spec = LastSpec (const spec)
+  fromSpecMonoid (LastSpec m) = m do pure ()
