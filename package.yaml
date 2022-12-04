@@ -6,6 +6,8 @@ dependencies:
   - parsec
   - comonad
   - containers >= 0.6.4.1 && <0.7.0
+  - directory
+  - mtl
 
 executables:
   advent-of-code:
@@ -16,7 +18,6 @@ executables:
     dependencies:
       - bytestring
       - optparse-generic >= 1.4.8 && <2
-      - directory
       - http-client
       - http-client-tls
       - http-types
