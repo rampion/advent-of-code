@@ -63,3 +63,23 @@ main = hspec do
 
     it "reports the correct output for part 2 of the example" do
       day3part2 exampleInput `shouldBe` 70
+
+  describe "day4" do
+    let exampleInput = 
+          [ ( (2,4),(6,8) )
+          , ( (2,3),(4,5) )
+          , ( (5,7),(7,9) )
+          , ( (2,8),(3,7) )
+          , ( (6,6),(4,6) )
+          , ( (2,6),(4,8) )
+          ]
+
+    it "can parse the example input" do
+      parsedInput <- liftIO do parseFromFile day4parser "test/input/day4"
+      parsedInput `shouldBe` Right exampleInput
+
+    it "reports the correct output for part 1 of the example" do
+      day4part1 exampleInput `shouldBe` 2
+
+    it "reports the correct output for part 2 of the example" do
+      day4part2 exampleInput `shouldBe` 4

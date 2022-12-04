@@ -35,6 +35,7 @@ solvers = Map.fromList
   [ ( "2022/day/1", Solver day1parser day1part1 day1part2)
   , ( "2022/day/2", Solver day2parser day2part1 day2part2)
   , ( "2022/day/3", Solver day3parser day3part1 day3part2)
+  , ( "2022/day/4", Solver day4parser day4part1 day4part2)
   ]
 
 main :: IO ()
