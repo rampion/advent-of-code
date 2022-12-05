@@ -1,14 +1,15 @@
 module Main where
 
 import AdventOfCode
-import Control.Monad.Writer (WriterT(..), tell)
-import Control.Monad.IO.Class (liftIO)
 import Control.Monad (when)
-import Prelude
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Writer (WriterT (..), tell)
+import Data.IntMap qualified as IntMap
+import Data.Monoid (Dual (..), Endo (..))
+import System.Directory (doesFileExist)
 import Test.Hspec
 import Text.Parsec.String (parseFromFile)
-import System.Directory (doesFileExist)
-import Data.Monoid (Endo(..), Dual(..))
+import Prelude
 
 main :: IO ()
 main = runSpecs @LastSpec do
@@ -69,13 +70,13 @@ main = runSpecs @LastSpec do
       day3part2 exampleInput `shouldBe` 70
 
   describeIfAvailable "day4" \day4Input -> do
-    let exampleInput = 
-          [ ( (2,4),(6,8) )
-          , ( (2,3),(4,5) )
-          , ( (5,7),(7,9) )
-          , ( (2,8),(3,7) )
-          , ( (6,6),(4,6) )
-          , ( (2,6),(4,8) )
+    let exampleInput =
+          [ ((2, 4), (6, 8))
+          , ((2, 3), (4, 5))
+          , ((5, 7), (7, 9))
+          , ((2, 8), (3, 7))
+          , ((6, 6), (4, 6))
+          , ((2, 6), (4, 8))
           ]
 
     it "can parse the example input" do
@@ -89,17 +90,26 @@ main = runSpecs @LastSpec do
       day4part2 exampleInput `shouldBe` 4
 
   describeIfAvailable "day5" \day5input -> do
-    let exampleInput = error "unknown"
+    let exampleInput =
+          Day5Input
+            { crateStacks = IntMap.fromList [(1, "NZ"), (2, "DCM"), (3, "P")]
+            , procedure =
+                [ Step {move = 1, from = 2, to = 1}
+                , Step {move = 3, from = 1, to = 3}
+                , Step {move = 2, from = 2, to = 1}
+                , Step {move = 1, from = 1, to = 2}
+                ]
+            }
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day5parser day5input
       parsedInput `shouldBe` Right exampleInput
 
     it "reports the correct output for part 1 of the example" do
-      day5part1 exampleInput `shouldBe` error "unknown"
+      day5part1 exampleInput `shouldBe` "CMZ"
 
     it "reports the correct output for part 2 of the example" do
-      day5part2 exampleInput `shouldBe` error "unknown"
+      day5part2 exampleInput `shouldBe` "MCD"
 
   describeIfAvailable "day6" \day6input -> do
     let exampleInput = error "unknown"
@@ -363,7 +373,7 @@ main = runSpecs @LastSpec do
 
 runSpecs :: SpecMonoid m => WriterT m IO () -> IO ()
 runSpecs w = do
-  ( (), spec ) <- runWriterT w
+  ((), spec) <- runWriterT w
   hspec (fromSpecMonoid spec)
 
 describeIfAvailable :: SpecMonoid m => String -> (String -> SpecWith ()) -> WriterT m IO ()
