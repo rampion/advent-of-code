@@ -114,11 +114,11 @@ main = runSpecs @LastSpec do
 
   describeTell "day6" do
     let examples = zip [0 :: Int ..]
-          [ ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 7, error "unknown")
-          , ("bvwbjplbgvbhsrlpgdmjqwftvncz", 5, error "unknown")
-          , ("nppdvjthqldpwncqszvftbrmjlhg", 6, error "unknown")
-          , ("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 10, error "unknown")
-          , ("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 11, error "unknown")
+          [ ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 7, 19)
+          , ("bvwbjplbgvbhsrlpgdmjqwftvncz", 5, 23)
+          , ("nppdvjthqldpwncqszvftbrmjlhg", 6, 23)
+          , ("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 10, 29)
+          , ("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 11, 26)
           ]
 
     forM_ examples \(i, (exampleInput, _, _)) -> do
@@ -136,7 +136,7 @@ main = runSpecs @LastSpec do
     describe "part 2" do
       forM_ examples \(i, (exampleInput, _, exampleOutput2)) -> do
         let name = "example input " ++ show i
-        xit ("reports the correct output for part 2 with " ++ name) do
+        it ("reports the correct output for part 2 with " ++ name) do
           day6part2 exampleInput `shouldBe` exampleOutput2
 
   describeIfAvailable "day7" \day7input -> do
