@@ -1,7 +1,7 @@
 module Main where
 
 import AdventOfCode
-import Control.Monad (when)
+import Control.Monad (when, forM_)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Writer (WriterT (..), tell)
 import Data.IntMap qualified as IntMap
@@ -9,6 +9,7 @@ import Data.Monoid (Dual (..), Endo (..))
 import System.Directory (doesFileExist)
 import Test.Hspec
 import Text.Parsec.String (parseFromFile)
+import Text.Parsec (runParser)
 import Prelude
 
 main :: IO ()
@@ -111,18 +112,32 @@ main = runSpecs @LastSpec do
     it "reports the correct output for part 2 of the example" do
       day5part2 exampleInput `shouldBe` "MCD"
 
-  describeIfAvailable "day6" \day6input -> do
-    let exampleInput = error "unknown"
+  describeTell "day6" do
+    let examples = zip [0 :: Int ..]
+          [ ("mjqjpqmgbljsphdztnvjfqwrcgsmlb", 7, error "unknown")
+          , ("bvwbjplbgvbhsrlpgdmjqwftvncz", 5, error "unknown")
+          , ("nppdvjthqldpwncqszvftbrmjlhg", 6, error "unknown")
+          , ("nznrnfrfntjfmvfwmzdfjlvtqnbhcprsg", 10, error "unknown")
+          , ("zcfzfwzzqfrljwzlrfnpqdbhtmscgvjw", 11, error "unknown")
+          ]
 
-    it "can parse the example input" do
-      parsedInput <- liftIO do parseFromFile day6parser day6input
-      parsedInput `shouldBe` Right exampleInput
+    forM_ examples \(i, (exampleInput, _, _)) -> do
+      let name = "example input " ++ show i
+      
+      it ("can parse " ++ name) do
+        runParser day6parser () name exampleInput `shouldBe` Right exampleInput
 
-    it "reports the correct output for part 1 of the example" do
-      day6part1 exampleInput `shouldBe` error "unknown"
+    describe "part 1" do
+      forM_ examples \(i, (exampleInput, exampleOutput1, _)) -> do
+        let name = "example input " ++ show i
+        it ("reports the correct output for part 1 with " ++ name) do
+          day6part1 exampleInput `shouldBe` exampleOutput1
 
-    it "reports the correct output for part 2 of the example" do
-      day6part2 exampleInput `shouldBe` error "unknown"
+    describe "part 2" do
+      forM_ examples \(i, (exampleInput, _, exampleOutput2)) -> do
+        let name = "example input " ++ show i
+        xit ("reports the correct output for part 2 with " ++ name) do
+          day6part2 exampleInput `shouldBe` exampleOutput2
 
   describeIfAvailable "day7" \day7input -> do
     let exampleInput = error "unknown"
@@ -376,12 +391,15 @@ runSpecs w = do
   ((), spec) <- runWriterT w
   hspec (fromSpecMonoid spec)
 
+describeTell :: SpecMonoid m => String -> SpecWith () -> WriterT m IO ()
+describeTell name = tell . toSpecMonoid . Test.Hspec.describe name
+
 describeIfAvailable :: SpecMonoid m => String -> (String -> SpecWith ()) -> WriterT m IO ()
 describeIfAvailable day test = do
   let testInput = "test/input/" <> day
   inputExists <- liftIO do doesFileExist testInput
   when inputExists do
-    tell do toSpecMonoid do describe day (test testInput)
+    describeTell day (test testInput)
 
 class Monoid m => SpecMonoid m where
   toSpecMonoid :: Spec -> m
