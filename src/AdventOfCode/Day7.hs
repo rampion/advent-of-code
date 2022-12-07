@@ -7,7 +7,7 @@ import Control.Applicative (some)
 
 import Data.String (IsString)
 import Text.Parsec
-import Data.Map.Lazy qualified as Map
+import Data.Map.Strict qualified as Map
 import Data.List qualified as List
 import Data.Functor ((<&>))
 
