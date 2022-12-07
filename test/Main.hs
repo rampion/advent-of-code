@@ -140,17 +140,45 @@ main = runSpecs @LastSpec do
           day6part2 exampleInput `shouldBe` exampleOutput2
 
   describeIfAvailable "day7" \day7input -> do
-    let exampleInput = error "unknown"
+    let exampleInput = 
+          [ CD Outermost
+          , LS 
+            [ Dir "a"
+            , File 14848514 "b.txt"
+            , File 8504156 "c.dat"
+            , Dir "d"
+            ]
+          , CD (In "a")
+          , LS
+            [ Dir "e"
+            , File 29116 "f"
+            , File 2557 "g"
+            , File 62596 "h.lst"
+            ]
+          , CD (In "e")
+          , LS
+            [ File 584 "i"
+            ]
+          , CD Out
+          , CD Out
+          , CD (In "d")
+          , LS
+            [ File 4060174 "j"
+            , File 8033020 "d.log"
+            , File 5626152 "d.ext"
+            , File 7214296 "k"
+            ]
+          ]
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day7parser day7input
       parsedInput `shouldBe` Right exampleInput
 
     it "reports the correct output for part 1 of the example" do
-      day7part1 exampleInput `shouldBe` error "unknown"
+      day7part1 exampleInput `shouldBe` 95437
 
     it "reports the correct output for part 2 of the example" do
-      day7part2 exampleInput `shouldBe` error "unknown"
+      day7part2 exampleInput `shouldBe` 24933642
 
   describeIfAvailable "day8" \day8input -> do
     let exampleInput = error "unknown"
