@@ -257,17 +257,41 @@ main = runSpecs @LastSpec do
       day8part2 exampleInput `shouldBe` 8
 
   describeIfAvailable "day9" \day9input -> do
-    let exampleInput = error "unknown"
+    let exampleInput = 
+          [ (R, 4)
+          , (U, 4)
+          , (L, 3)
+          , (D, 1)
+          , (R, 4)
+          , (D, 1)
+          , (L, 5)
+          , (R, 2)
+          ]
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day9parser day9input
       parsedInput `shouldBe` Right exampleInput
 
     it "reports the correct output for part 1 of the example" do
-      day9part1 exampleInput `shouldBe` error "unknown"
+      day9part1 exampleInput `shouldBe` 13
 
     it "reports the correct output for part 2 of the example" do
-      day9part2 exampleInput `shouldBe` error "unknown"
+      day9part2 exampleInput `shouldBe` 1
+
+    let exampleInput2 = 
+          [ (R, 5)
+          , (U, 8)
+          , (L, 8)
+          , (D, 3)
+          , (R, 17)
+          , (D, 10)
+          , (L, 25)
+          , (U, 20)
+          ]
+
+    it "reports the correct output for part 2 of the larger example" do
+      day9part2 exampleInput2 `shouldBe` 36
+
 
   describeIfAvailable "day10" \day10input -> do
     let exampleInput = error "unknown"

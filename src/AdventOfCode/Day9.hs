@@ -2,14 +2,86 @@ module AdventOfCode.Day9 where
 
 import Prelude
 import AdventOfCode.Solver
+import Text.Parsec
+import Control.Applicative (some)
+import Data.Set qualified as Set
+import Data.List (scanl')
 
-import Data.Void
+type Motion = (Direction, Int)
+data Direction = L | U | R | D
+  deriving stock (Show, Eq, Read)
 
-day9parser :: Parser Void
-day9parser = error "unimplemented"
+day9parser :: Parser [Motion]
+day9parser = motion `endBy` newline where
+  motion = (,) <$> direction <* char ' ' <*> distance
+  direction = read . pure <$> oneOf "LURD"
+  distance = read <$> some digit
 
-day9part1 :: Void -> ()
-day9part1 = error "unimplemented"
+{-------------------------------------------------------------------------------
+ Two algorithms leap to mind.
 
-day9part2 :: Void -> ()
-day9part2 = error "unimplemented"
+ 1) Rasterization
+
+    Turn the instructions for the head into a list of coordinates for the head.
+    Use that to get a list of tail coordinates, then turn the list into a set
+    and get the size of the set.
+
+    We can compute the tail coordinates pretty easily with
+
+      data Coord a = Coord a a
+        deriving Functor, Foldable, Num
+
+      magnitude :: (Num a, Ord a) => Coord a -> a
+      magnitude = maximum . abs
+
+      step :: Num a => Coord a -> Coord a
+      step = signum
+
+      diff = newHead - oldTail
+      newTail = oldTail +
+        if magnitude diff > 1
+        then step diff
+        else 0
+
+    This is O(# points) so it could be slow, depending on the input.
+
+ 2) Vectorization
+
+    Turn the instructions for the head into instructions for the tail, and then
+    convert that into a list of line segments. Bin the line segments by
+    orientation (n-s,e-w,ne-se,nw-sw), combining overlapping segments.
+    Calculate the points of overlap between the bins, with multiplicity. Sum
+    the segment lengths and subtract the extra points from the intersections.
+
+    This has a lot more steps, but is only O((# line segments)²) [assuming a
+    crappy intersection algorithm], so could potentially be much faster for
+    long segments.
+      
+ -------------------------------------------------------------------------------}
+
+day9part1 :: [Motion] -> Int
+day9part1 = Set.size . Set.fromList . toTailCoords . toHeadCoords 
+
+toHeadCoords :: [Motion] -> [Coord Int]
+toHeadCoords = scanl' step (Coord 0 0) . concatMap expand
+  where expand (d, n) = replicate n d
+        step (Coord x y) = \case
+          L -> Coord (x - 1) y
+          U -> Coord x (y + 1)
+          R -> Coord (x + 1) y
+          D -> Coord x (y - 1)
+
+toTailCoords :: [Coord Int] -> [Coord Int]
+toTailCoords = scanl1 follow where
+  follow t@(Coord tx ty) (Coord hx hy)
+    | abs dx `max` abs dy < 2 = t
+    | otherwise = Coord (tx + signum dx) (ty + signum dy)
+    where dx = hx - tx
+          dy = hy - ty
+
+data Coord a = Coord !a !a
+  deriving stock (Show, Eq, Ord)
+
+day9part2 :: [Motion] -> Int
+day9part2 = Set.size . Set.fromList . toTailCoords9 . toHeadCoords 
+  where toTailCoords9 = iterate (toTailCoords .) id !! 9
