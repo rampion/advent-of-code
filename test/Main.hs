@@ -181,17 +181,80 @@ main = runSpecs @LastSpec do
       day7part2 exampleInput `shouldBe` 24933642
 
   describeIfAvailable "day8" \day8input -> do
-    let exampleInput = error "unknown"
+    let exampleInput = toGrid rawInput
+        rawInput =
+          [ [ 3, 0, 3, 7, 3 ]
+          , [ 2, 5, 5, 1, 2 ]
+          , [ 6, 5, 3, 3, 2 ]
+          , [ 3, 3, 5, 4, 9 ]
+          , [ 3, 5, 3, 9, 0 ]
+          ]
 
     it "can parse the example input" do
-      parsedInput <- liftIO do parseFromFile day8parser day8input
-      parsedInput `shouldBe` Right exampleInput
+      parsedInput <- liftIO do parseFromFile (fromGrid <$> day8parser) day8input
+      parsedInput `shouldBe` Right rawInput
 
     it "reports the correct output for part 1 of the example" do
-      day8part1 exampleInput `shouldBe` error "unknown"
+      day8part1 exampleInput `shouldBe` 21
+
+    describe "visible" do
+      it "reports the correct total visibilities" do
+        fromGrid (visible exampleInput) `shouldBe`
+            [ [  True,  True,  True,  True,  True ]
+            , [  True,  True,  True, False,  True ]
+            , [  True,  True, False,  True,  True ]
+            , [  True, False,  True, False,  True ]
+            , [  True,  True,  True,  True,  True ]
+            ]
+
+    describe "visibilities" do
+      it "reports the correct partial visibilities" do
+        let t = True
+            f = False
+        fromGrid (visibilities exampleInput) `shouldBe`
+            [ [ [t,f,t,f], [f,f,t,f], [f,f,t,f], [t,t,t,f], [f,t,t,f] ]
+            , [ [t,f,f,f], [t,f,t,f], [f,t,t,f], [f,f,f,f], [f,t,f,f] ]
+            , [ [t,t,t,t], [f,t,f,f], [f,f,f,f], [f,t,f,f], [f,t,f,f] ]
+            , [ [t,f,f,f], [f,f,f,f], [t,f,f,t], [f,f,f,f], [t,t,t,t] ]
+            , [ [t,f,f,t], [t,f,f,t], [f,f,f,t], [t,t,t,t], [f,t,f,t] ]
+            ]
+
+    describe "leftToRight" do
+      it "reports the correct left-to-right visibilities" do
+        let t = True
+            f = False
+        fromGrid (leftToRight exampleInput) `shouldBe`
+            [ [ t, f, f, t, f ]
+            , [ t, t, f, f, f ]
+            , [ t, f, f, f, f ]
+            , [ t, f, t, f, t ]
+            , [ t, t, f, t, f ]
+            ]
+
+    describe "isLeftVisible" do
+      it "reports the correct left-to-right visibilities" do
+        isLeftVisible [ 3, 0, 3, 7, 3] `shouldBe` [True, False, False, True, False]
+
+      it "uses the correct scan" do
+        scanl max (-1) [3, 0, 3, 7, 3] `shouldBe` [-1,3,3,3,7,7 :: Int]
+
+    describe "scenicScores" do
+      it "assigns the correct scores to each location" do
+        fromGrid (scenicScores exampleInput) `shouldBe`
+            [ [ 0, 0, 0, 0, 0 ]
+            , [ 0, 1, 4, 1, 0 ]
+            , [ 0, 6, 1, 2, 0 ]
+            , [ 0, 1, 8, 3, 0 ]
+            , [ 0, 0, 0, 0, 0 ]
+            ]
+
+    describe "leftScores" do
+      it "assigns the correct scores to each location" do
+        leftScore [3,0,3,7,3] `shouldBe` [0,1,2,3,1]
+        
 
     it "reports the correct output for part 2 of the example" do
-      day8part2 exampleInput `shouldBe` error "unknown"
+      day8part2 exampleInput `shouldBe` 8
 
   describeIfAvailable "day9" \day9input -> do
     let exampleInput = error "unknown"
