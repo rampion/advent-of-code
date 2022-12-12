@@ -581,17 +581,68 @@ main = runSpecs @LastSpec do
         \#######.......#######.......#######....."
 
   describeIfAvailable "day11" \day11input -> do
-    let exampleInput = error "unknown"
+    let exampleInput =
+          [ Note
+            { items = [79,98]
+            , monkey = Monkey
+              { operation = Times 19
+              , divisibleBy = 23
+              , throwTrueTo = 2
+              , throwFalseTo = 3
+              }
+            }
+          , Note
+            { items = [54,65,75,74]
+            , monkey = Monkey
+              { operation = Plus 6
+              , divisibleBy = 19
+              , throwTrueTo = 2
+              , throwFalseTo = 0
+              }
+            }
+          , Note
+            { items = [79,60,97]
+            , monkey = Monkey
+              { operation = Square
+              , divisibleBy = 13
+              , throwTrueTo = 1
+              , throwFalseTo = 3
+              }
+            }
+          , Note
+            { items = [74]
+            , monkey = Monkey
+              { operation = Plus 3
+              , divisibleBy = 17
+              , throwTrueTo = 0
+              , throwFalseTo = 1
+              }
+            }
+          ]
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day11parser day11input
       parsedInput `shouldBe` Right exampleInput
 
     it "reports the correct output for part 1 of the example" do
-      day11part1 exampleInput `shouldBe` error "unknown"
+      day11part1 exampleInput `shouldBe` 10605
+
+    it "reports the correct first round behaviour" do
+      let firstRound = rounds (Just (`quot` 3)) exampleInput !! 0
+      zip [0 :: Int ..] firstRound `shouldBe` 
+        [ (0, [79, 98])
+        , (1, [54, 65, 75, 74])
+        , (2, [79, 60, 97])
+        , (3, [74, 500, 620, 1200, 3136])
+        ]
+
+    it "reports the correct early round behaviour for part 2" do
+      inspectionsIn Nothing 1 exampleInput `shouldBe` [2, 4, 3, 6]
+      inspectionsIn Nothing 20 exampleInput `shouldBe` [99, 97, 8, 103]
+      inspectionsIn Nothing 1000 exampleInput `shouldBe` [5204,4792,199,5192]
 
     it "reports the correct output for part 2 of the example" do
-      day11part2 exampleInput `shouldBe` error "unknown"
+      day11part2 exampleInput `shouldBe` 2_713_310_158
 
   describeIfAvailable "day12" \day12input -> do
     let exampleInput = error "unknown"
