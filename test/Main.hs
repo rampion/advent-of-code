@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedLists #-}
 module Main where
 
 import AdventOfCode
@@ -691,17 +692,72 @@ main = runSpecs @LastSpec do
       day12part2 exampleInput `shouldBe` 29
 
   describeIfAvailable "day13" \day13input -> do
-    let exampleInput = error "unknown"
+    let exampleInput =
+          [ ( [1,1,3,1,1]
+            , [1,1,5,1,1]
+            )
+
+          , ( [[1],[2,3,4]]
+            , [[1],4]
+            )
+
+          , ( [9]
+            , [[8,7,6]]
+            )
+
+          , ( [[4,4],4,4]
+            , [[4,4],4,4,4]
+            )
+
+          , ( [7,7,7,7]
+            , [7,7,7]
+            )
+
+          , ( []
+            , [3]
+            )
+
+          , ( [[[]]]
+            , [[]]
+            )
+
+          , ( [1,[2,[3,[4,[5,6,7]]]],8,9]
+            , [1,[2,[3,[4,[5,6,0]]]],8,9]
+            )
+          ]
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day13parser day13input
       parsedInput `shouldBe` Right exampleInput
 
     it "reports the correct output for part 1 of the example" do
-      day13part1 exampleInput `shouldBe` error "unknown"
+      day13part1 exampleInput `shouldBe` 13
+
+    it "orders the packets correctly" do
+      order exampleInput `shouldBe`
+        [ []
+        , [[]]
+        , [[[]]]
+        , [1,1,3,1,1]
+        , [1,1,5,1,1]
+        , [[1],[2,3,4]]
+        , [1,[2,[3,[4,[5,6,0]]]],8,9]
+        , [1,[2,[3,[4,[5,6,7]]]],8,9]
+        , [[1],4]
+        , [[2]]
+        , [3]
+        , [[4,4],4,4]
+        , [[4,4],4,4,4]
+        , [[6]]
+        , [7,7,7]
+        , [7,7,7,7]
+        , [[8,7,6]]
+        , [9]
+        ]
+
 
     it "reports the correct output for part 2 of the example" do
-      day13part2 exampleInput `shouldBe` error "unknown"
+      day13part2 exampleInput `shouldBe` 140
 
   describeIfAvailable "day14" \day14input -> do
     let exampleInput = error "unknown"
