@@ -12,6 +12,7 @@ import Text.Parsec.String (parseFromFile)
 import Text.Parsec (runParser)
 import Prelude
 import Data.Maybe (catMaybes)
+import Data.Vector qualified as Vector
 
 main :: IO ()
 main = runSpecs @LastSpec do
@@ -645,17 +646,49 @@ main = runSpecs @LastSpec do
       day11part2 exampleInput `shouldBe` 2_713_310_158
 
   describeIfAvailable "day12" \day12input -> do
-    let exampleInput = error "unknown"
+    let exampleInput = HeightMap
+          { currentPosition = Position { column = 0, row = 0 }
+          , bestSignal = Position { column = 5, row = 2 }
+          , elevations = ElevationGrid do 
+              Vector.fromList
+                [  Vector.fromList [0,  0,  1, 16, 15, 14, 13, 12]
+                ,  Vector.fromList [0,  1,  2, 17, 24, 23, 23, 11]
+                ,  Vector.fromList [0,  2,  2, 18, 25, 25, 23, 10]
+                ,  Vector.fromList [0,  2,  2, 19, 20, 21, 22,  9]
+                ,  Vector.fromList [0,  1,  3,  4,  5,  6,  7,  8]
+                ]
+          }
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day12parser day12input
       parsedInput `shouldBe` Right exampleInput
 
     it "reports the correct output for part 1 of the example" do
-      day12part1 exampleInput `shouldBe` error "unknown"
+      day12part1 exampleInput `shouldBe` Just 31
 
+    it "searches the grid correctly" do
+      let n = Nothing
+      let HeightMap{currentPosition,elevations} = exampleInput
+      let grids = search currentPosition elevations
+      (grids !! 0) `shouldBe` ElevationGrid do 
+        Vector.fromList
+          [  Vector.fromList [Just 0,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ]
+
+      (grids !! 1) `shouldBe` ElevationGrid do 
+        Vector.fromList
+          [  Vector.fromList [Just 0,Just 1,n,n,n,n,n,n]
+          ,  Vector.fromList [Just 1,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ,  Vector.fromList [n,n,n,n,n,n,n,n]
+          ]
     it "reports the correct output for part 2 of the example" do
-      day12part2 exampleInput `shouldBe` error "unknown"
+      day12part2 exampleInput `shouldBe` 29
 
   describeIfAvailable "day13" \day13input -> do
     let exampleInput = error "unknown"

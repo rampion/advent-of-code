@@ -8,6 +8,7 @@ dependencies:
   - containers >= 0.6.4.1 && <0.7.0
   - directory
   - mtl
+  - vector
 
 executables:
   advent-of-code:
