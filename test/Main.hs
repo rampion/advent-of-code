@@ -14,6 +14,7 @@ import Text.Parsec (runParser)
 import Prelude
 import Data.Maybe (catMaybes)
 import Data.Vector qualified as Vector
+import Data.Map qualified as Map
 
 main :: IO ()
 main = runSpecs @LastSpec do
@@ -760,17 +761,50 @@ main = runSpecs @LastSpec do
       day13part2 exampleInput `shouldBe` 140
 
   describeIfAvailable "day14" \day14input -> do
-    let exampleInput = error "unknown"
+    -- The sand is pouring into the cave from point 500,0.
+    let exampleInput = 
+          [ RockShape [ Point{right=498,down=4}, Point{right=498,down=6}, Point{right=496,down=6} ]
+          , RockShape [ Point{right=503,down=4}, Point{right=502,down=4}, Point{right=502,down=9}, Point{right=494,down=9} ]
+          ]
 
     it "can parse the example input" do
       parsedInput <- liftIO do parseFromFile day14parser day14input
       parsedInput `shouldBe` Right exampleInput
 
+    it "can load the empty cave" do
+      makeCave exampleInput `shouldBe` Cave
+        { leftEdge = 494
+        , rightEdge = 503
+        , bottomEdge = 9
+        , caveContents = Map.fromList
+            [ ( Point 498 4, RockFilled )
+            , ( Point 498 5, RockFilled )
+            , ( Point 498 6, RockFilled )
+            , ( Point 497 6, RockFilled )
+            , ( Point 496 6, RockFilled )
+            , ( Point 503 4, RockFilled )
+            , ( Point 502 4, RockFilled )
+            , ( Point 502 5, RockFilled )
+            , ( Point 502 6, RockFilled )
+            , ( Point 502 7, RockFilled )
+            , ( Point 502 8, RockFilled )
+            , ( Point 502 9, RockFilled )
+            , ( Point 501 9, RockFilled )
+            , ( Point 500 9, RockFilled )
+            , ( Point 499 9, RockFilled )
+            , ( Point 498 9, RockFilled )
+            , ( Point 497 9, RockFilled )
+            , ( Point 496 9, RockFilled )
+            , ( Point 495 9, RockFilled )
+            , ( Point 494 9, RockFilled )
+            ]
+        }
+
     it "reports the correct output for part 1 of the example" do
-      day14part1 exampleInput `shouldBe` error "unknown"
+      day14part1 exampleInput `shouldBe` 24
 
     it "reports the correct output for part 2 of the example" do
-      day14part2 exampleInput `shouldBe` error "unknown"
+      day14part2 exampleInput `shouldBe` 93
 
   describeIfAvailable "day15" \day15input -> do
     let exampleInput = error "unknown"
