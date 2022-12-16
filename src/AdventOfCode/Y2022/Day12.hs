@@ -14,7 +14,7 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = tellSpec do
+  , spec = do
       let exampleInput = HeightMap
             { currentPosition = Position { column = 0, row = 0 }
             , bestSignal = Position { column = 5, row = 2 }
@@ -27,14 +27,14 @@ solver = Solver
                   ,  Vector.fromList [0,  1,  3,  4,  5,  6,  7,  8]
                   ]
             }
-      runCheck parser part1 part2 Example
+      check parser part1 part2 Example
         { raw = [text|
             Sabqponm
             abcryxxl
             accszExk
             acctuvwj
             abdefghi
-          |]
+          |] <> "\n"
         , parsed = exampleInput
         , part1output = Just 31
         , part2output = 29

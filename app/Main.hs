@@ -34,13 +34,16 @@ data Part = Part1 | Part2
 
 instance ParseField Part
 
+solverMap :: Map.Map String Solver
+solverMap = Map.fromList solvers
+
 main :: IO ()
 main = do
   App day part <- getRecord "Advent of Code solver"
 
   Solver{parser,part1,part2} <- fromMaybe
     do die do "no available solver for " <> day
-    do pure <$> Map.lookup day solvers
+    do pure <$> Map.lookup day solverMap
 
   let inputPath = "input/" <> day
 

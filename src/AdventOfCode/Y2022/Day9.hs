@@ -9,8 +9,8 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = tellSpec do
-      runCheck parser part1 part2 Example
+  , spec = do
+      check parser part1 part2 Example
         { raw = [text|
             R 4
             U 4
@@ -20,7 +20,7 @@ solver = Solver
             D 1
             L 5
             R 2
-          |]
+          |] <> "\n"
         , parsed = 
             [ (R, 4)
             , (U, 4)

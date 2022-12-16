@@ -10,7 +10,7 @@ solver =
     { parser
     , part1
     , part2
-    , spec = tellSpec do
+    , spec = fdescribe "bah" do
         let exampleInput =
               [ Report {sensor = XY {x = 2, y = 18}, beacon = XY {x = -2, y = 15}}
               , Report {sensor = XY {x = 9, y = 16}, beacon = XY {x = 10, y = 16}}
@@ -28,28 +28,27 @@ solver =
               , Report {sensor = XY {x = 20, y = 1}, beacon = XY {x = 15, y = 3}}
               ]
 
-        runCheck
-          parser
-          part1
-          part2
-          Example
+        it "reports the correct output for part 1 of the example" do
+          part1 exampleInput `shouldBe` 26
+
+        check parser (part1y 10) part2 Example
             { raw =
                 [text|
-            Sensor at x=2, y=18: closest beacon is at x=-2, y=15
-            Sensor at x=9, y=16: closest beacon is at x=10, y=16
-            Sensor at x=13, y=2: closest beacon is at x=15, y=3
-            Sensor at x=12, y=14: closest beacon is at x=10, y=16
-            Sensor at x=10, y=20: closest beacon is at x=10, y=16
-            Sensor at x=14, y=17: closest beacon is at x=10, y=16
-            Sensor at x=8, y=7: closest beacon is at x=2, y=10
-            Sensor at x=2, y=0: closest beacon is at x=2, y=10
-            Sensor at x=0, y=11: closest beacon is at x=2, y=10
-            Sensor at x=20, y=14: closest beacon is at x=25, y=17
-            Sensor at x=17, y=20: closest beacon is at x=21, y=22
-            Sensor at x=16, y=7: closest beacon is at x=15, y=3
-            Sensor at x=14, y=3: closest beacon is at x=15, y=3
-            Sensor at x=20, y=1: closest beacon is at x=15, y=3
-          |]
+                  Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+                  Sensor at x=9, y=16: closest beacon is at x=10, y=16
+                  Sensor at x=13, y=2: closest beacon is at x=15, y=3
+                  Sensor at x=12, y=14: closest beacon is at x=10, y=16
+                  Sensor at x=10, y=20: closest beacon is at x=10, y=16
+                  Sensor at x=14, y=17: closest beacon is at x=10, y=16
+                  Sensor at x=8, y=7: closest beacon is at x=2, y=10
+                  Sensor at x=2, y=0: closest beacon is at x=2, y=10
+                  Sensor at x=0, y=11: closest beacon is at x=2, y=10
+                  Sensor at x=20, y=14: closest beacon is at x=25, y=17
+                  Sensor at x=17, y=20: closest beacon is at x=21, y=22
+                  Sensor at x=16, y=7: closest beacon is at x=15, y=3
+                  Sensor at x=14, y=3: closest beacon is at x=15, y=3
+                  Sensor at x=20, y=1: closest beacon is at x=15, y=3
+                |] <> "\n"
             , parsed = exampleInput
             , part1output = 26
             , part2output = [56_000_011]
@@ -59,40 +58,40 @@ solver =
           findSegments 10 exampleInput `shouldBe` [(-2, 1), (3, 24)]
 
         it "detects correct radiuses for part 1 of the example" do
-          map radius exampleInput
-            `shouldBe` [ 7 -- Report {sensor=XY{x=2, y=18}, beacon=XY{x= -2, y=15}}
-                       , 1 -- Report {sensor=XY{x=9, y=16}, beacon=XY{x=10, y=16}}
-                       , 3 -- Report {sensor=XY{x=13, y=2}, beacon=XY{x=15, y=3}}
-                       , 4 -- Report {sensor=XY{x=12, y=14}, beacon=XY{x=10, y=16}}
-                       , 4 -- Report {sensor=XY{x=10, y=20}, beacon=XY{x=10, y=16}}
-                       , 5 -- Report {sensor=XY{x=14, y=17}, beacon=XY{x=10, y=16}}
-                       , 9 -- Report {sensor=XY{x=8, y=7}, beacon=XY{x=2, y=10}}
-                       , 10 -- Report {sensor=XY{x=2, y=0}, beacon=XY{x=2, y=10}}
-                       , 3 -- Report {sensor=XY{x=0, y=11}, beacon=XY{x=2, y=10}}
-                       , 8 -- Report {sensor=XY{x=20, y=14}, beacon=XY{x=25, y=17}}
-                       , 6 -- Report {sensor=XY{x=17, y=20}, beacon=XY{x=21, y=22}}
-                       , 5 -- Report {sensor=XY{x=16, y=7}, beacon=XY{x=15, y=3}}
-                       , 1 -- Report {sensor=XY{x=14, y=3}, beacon=XY{x=15, y=3}}
-                       , 7 -- Report {sensor=XY{x=20, y=1}, beacon=XY{x=15, y=3}}
-                       ]
+          map radius exampleInput `shouldBe`
+            [ 7 -- Report {sensor=XY{x=2, y=18}, beacon=XY{x= -2, y=15}}
+            , 1 -- Report {sensor=XY{x=9, y=16}, beacon=XY{x=10, y=16}}
+            , 3 -- Report {sensor=XY{x=13, y=2}, beacon=XY{x=15, y=3}}
+            , 4 -- Report {sensor=XY{x=12, y=14}, beacon=XY{x=10, y=16}}
+            , 4 -- Report {sensor=XY{x=10, y=20}, beacon=XY{x=10, y=16}}
+            , 5 -- Report {sensor=XY{x=14, y=17}, beacon=XY{x=10, y=16}}
+            , 9 -- Report {sensor=XY{x=8, y=7}, beacon=XY{x=2, y=10}}
+            , 10 -- Report {sensor=XY{x=2, y=0}, beacon=XY{x=2, y=10}}
+            , 3 -- Report {sensor=XY{x=0, y=11}, beacon=XY{x=2, y=10}}
+            , 8 -- Report {sensor=XY{x=20, y=14}, beacon=XY{x=25, y=17}}
+            , 6 -- Report {sensor=XY{x=17, y=20}, beacon=XY{x=21, y=22}}
+            , 5 -- Report {sensor=XY{x=16, y=7}, beacon=XY{x=15, y=3}}
+            , 1 -- Report {sensor=XY{x=14, y=3}, beacon=XY{x=15, y=3}}
+            , 7 -- Report {sensor=XY{x=20, y=1}, beacon=XY{x=15, y=3}}
+            ]
 
         it "detects correct overlaps for part 1 of the example" do
-          map (overlapY 10) exampleInput
-            `shouldBe` [ Nothing -- Report {sensor=XY{x=2, y=18}, beacon=XY{x= -2, y=15}}
-                       , Nothing -- Report {sensor=XY{x=9, y=16}, beacon=XY{x=10, y=16}}
-                       , Nothing -- Report {sensor=XY{x=13, y=2}, beacon=XY{x=15, y=3}}
-                       , Just (12, 12) -- Report {sensor=XY{x=12, y=14}, beacon=XY{x=10, y=16}}
-                       , Nothing -- Report {sensor=XY{x=10, y=20}, beacon=XY{x=10, y=16}}
-                       , Nothing -- Report {sensor=XY{x=14, y=17}, beacon=XY{x=10, y=16}}
-                       , Just (3, 14) -- Report {sensor=XY{x=8, y=7}, beacon=XY{x=2, y=10}}
-                       , Nothing -- Report {sensor=XY{x=2, y=0}, beacon=XY{x=2, y=10}}
-                       , Just (-2, 1) -- Report {sensor=XY{x=0, y=11}, beacon=XY{x=2, y=10}}
-                       , Just (16, 24) -- Report {sensor=XY{x=20, y=14}, beacon=XY{x=25, y=17}}
-                       , Nothing -- Report {sensor=XY{x=17, y=20}, beacon=XY{x=21, y=22}}
-                       , Just (14, 18) -- Report {sensor=XY{x=16, y=7}, beacon=XY{x=15, y=3}}
-                       , Nothing -- Report {sensor=XY{x=14, y=3}, beacon=XY{x=15, y=3}}
-                       , Nothing -- Report {sensor=XY{x=20, y=1}, beacon=XY{x=15, y=3}}
-                       ]
+          map (overlapY 10) exampleInput `shouldBe`
+            [ Nothing -- Report {sensor=XY{x=2, y=18}, beacon=XY{x= -2, y=15}}
+            , Nothing -- Report {sensor=XY{x=9, y=16}, beacon=XY{x=10, y=16}}
+            , Nothing -- Report {sensor=XY{x=13, y=2}, beacon=XY{x=15, y=3}}
+            , Just (12, 12) -- Report {sensor=XY{x=12, y=14}, beacon=XY{x=10, y=16}}
+            , Nothing -- Report {sensor=XY{x=10, y=20}, beacon=XY{x=10, y=16}}
+            , Nothing -- Report {sensor=XY{x=14, y=17}, beacon=XY{x=10, y=16}}
+            , Just (3, 14) -- Report {sensor=XY{x=8, y=7}, beacon=XY{x=2, y=10}}
+            , Nothing -- Report {sensor=XY{x=2, y=0}, beacon=XY{x=2, y=10}}
+            , Just (-2, 1) -- Report {sensor=XY{x=0, y=11}, beacon=XY{x=2, y=10}}
+            , Just (16, 24) -- Report {sensor=XY{x=20, y=14}, beacon=XY{x=25, y=17}}
+            , Nothing -- Report {sensor=XY{x=17, y=20}, beacon=XY{x=21, y=22}}
+            , Just (14, 18) -- Report {sensor=XY{x=16, y=7}, beacon=XY{x=15, y=3}}
+            , Nothing -- Report {sensor=XY{x=14, y=3}, beacon=XY{x=15, y=3}}
+            , Nothing -- Report {sensor=XY{x=20, y=1}, beacon=XY{x=15, y=3}}
+            ]
 
         it "reports the correct coordinates for part 2 of the example" do
           locate 20 exampleInput `shouldBe` [XY 14 11]

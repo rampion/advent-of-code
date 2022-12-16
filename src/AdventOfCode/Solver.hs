@@ -1,11 +1,12 @@
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE NoFieldSelectors #-}
 
 module AdventOfCode.Solver where
 
-import AdventOfCode.Spec
 import Data.Kind
 import Data.Text (Text)
+import Test.Hspec hiding (Example)
 import Text.Parsec
 import Prelude
 
@@ -30,7 +31,7 @@ data Solver where
     { parser :: Parser input
     , part1 :: input -> part1output
     , part2 :: input -> part2output
-    , spec :: forall m. SpecMonoid m => SpecWriter m
+    , spec :: Spec
     } ->
     Solver
 
@@ -42,25 +43,32 @@ data Example input part1output part2output = Example
   , part2output :: part2output
   }
 
-check ::
-  ( SpecMonoid m
-  , Checkable input part1output part2output
-  ) =>
-  Parser input ->
-  (input -> part1output) ->
-  (input -> part2output) ->
-  Example input part1output part2output ->
-  SpecWriter m
-check parser part1 part2 = tellSpec . runCheck parser part1 part2
-
-runCheck ::
+xcheck ::
   Checkable input part1output part2output =>
   Parser input ->
   (input -> part1output) ->
   (input -> part2output) ->
   Example input part1output part2output ->
   Spec
-runCheck parser part1 part2 Example {raw, parsed, part1output, part2output} = do
+xcheck _parser _part1 _part2 _example = pure ()
+
+fcheck ::
+  Checkable input part1output part2output =>
+  Parser input ->
+  (input -> part1output) ->
+  (input -> part2output) ->
+  Example input part1output part2output ->
+  Spec
+fcheck parser part1 part2 = focus . check parser part1 part2
+
+check ::
+  Checkable input part1output part2output =>
+  Parser input ->
+  (input -> part1output) ->
+  (input -> part2output) ->
+  Example input part1output part2output ->
+  Spec
+check parser part1 part2 Example {raw, parsed, part1output, part2output} = do
   it "can parse the example" do
     parse parser "example" raw `shouldBe` Right parsed
 

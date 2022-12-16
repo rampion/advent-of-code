@@ -9,17 +9,17 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = tellSpec do
+  , spec = do
       let exampleInput = 
             [ RockShape [ Point{right=498,down=4}, Point{right=498,down=6}, Point{right=496,down=6} ]
             , RockShape [ Point{right=503,down=4}, Point{right=502,down=4}, Point{right=502,down=9}, Point{right=494,down=9} ]
             ]
 
-      runCheck parser part1 part2 Example
+      check parser part1 part2 Example
         { raw = [text|
             498,4 -> 498,6 -> 496,6
             503,4 -> 502,4 -> 502,9 -> 494,9
-          |]
+          |] <> "\n"
         , parsed = exampleInput
         , part1output = 24
         , part2output = 93

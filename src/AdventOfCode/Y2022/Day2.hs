@@ -9,26 +9,21 @@ solver =
     { parser
     , part1
     , part2
-    , spec =
-        check
-          parser
-          part1
-          part2
-          Example
-            { raw =
-                [text|
-        A Y
-        B X
-        C Z
-      |]
-            , parsed =
-                [ (Rock, Y)
-                , (Paper, X)
-                , (Scissors, Z)
-                ]
-            , part1output = 15
-            , part2output = 12
-            }
+    , spec = check parser part1 part2 Example
+        { raw =
+            [text|
+              A Y
+              B X
+              C Z
+            |] <> "\n"
+        , parsed =
+            [ (Rock, Y)
+            , (Paper, X)
+            , (Scissors, Z)
+            ]
+        , part1output = 15
+        , part2output = 12
+        }
     }
 
 type RockPaperScissors :: Type

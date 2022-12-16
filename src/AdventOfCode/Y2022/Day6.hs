@@ -11,7 +11,7 @@ solver =
     { parser
     , part1
     , part2
-    , spec = tellSpec do
+    , spec = do
         let examples =
               zip
                 [0 :: Int ..]

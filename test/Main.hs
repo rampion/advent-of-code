@@ -1,10 +1,10 @@
 module Main where
 
-import AdventOfCode (solvers)
-import AdventOfCode.Spec
+import AdventOfCode (Solver (..), solvers)
+import Control.Monad (forM_)
+import Test.Hspec
+import Prelude
 
 main :: IO ()
--- main = runSpecs @LastSpec do
-main = runSpecs @AllSpecs do
-  forM_ (Map.toList solvers) \(name, Solver{spec}) ->
-    describe name spec
+main = hspec do
+  forM_ solvers \(name, Solver {spec}) -> describe name spec

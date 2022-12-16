@@ -15,7 +15,7 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = tellSpec do
+  , spec = do
       let exampleInput =
             [ Note
               { items = [79,98]
@@ -55,7 +55,7 @@ solver = Solver
               }
             ]
 
-      runCheck parser part1 part2 Example
+      check parser part1 part2 Example
         { raw = [text|
             Monkey 0:
               Starting items: 79, 98
@@ -84,7 +84,7 @@ solver = Solver
               Test: divisible by 17
                 If true: throw to monkey 0
                 If false: throw to monkey 1
-          |]
+          |] <> "\n"
         , parsed = exampleInput
         , part1output = 10605
         , part2output = 2_713_310_158

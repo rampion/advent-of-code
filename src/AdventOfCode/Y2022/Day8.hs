@@ -11,17 +11,15 @@ solver =
     { parser
     , part1
     , part2
-    , spec = tellSpec do
-        let raw =
-              [text|
+    , spec = do
+        let raw = [text|
                 30373
                 25512
                 65332
                 33549
                 35390
-              |]
-            parsed =
-              toGrid
+              |] <> "\n"
+            parsed = toGrid
                 [ [3, 0, 3, 7, 3]
                 , [2, 5, 5, 1, 2]
                 , [6, 5, 3, 3, 2]
@@ -29,50 +27,46 @@ solver =
                 , [3, 5, 3, 9, 0]
                 ]
 
-        runCheck
-          parser
-          part1
-          part2
-          Example
-            { raw
-            , parsed
-            , part1output = 21
-            , part2output = 8
-            }
+        check parser part1 part2 Example
+          { raw
+          , parsed
+          , part1output = 21
+          , part2output = 8
+          }
 
         describe "visible" do
           it "reports the correct total visibilities" do
-            fromGrid (visible parsed)
-              `shouldBe` [ [True, True, True, True, True]
-                         , [True, True, True, False, True]
-                         , [True, True, False, True, True]
-                         , [True, False, True, False, True]
-                         , [True, True, True, True, True]
-                         ]
+            fromGrid (visible parsed) `shouldBe` 
+              [ [True, True, True, True, True]
+              , [True, True, True, False, True]
+              , [True, True, False, True, True]
+              , [True, False, True, False, True]
+              , [True, True, True, True, True]
+              ]
 
         describe "visibilities" do
           it "reports the correct partial visibilities" do
             let t = True
                 f = False
-            fromGrid (visibilities parsed)
-              `shouldBe` [ [[t, f, t, f], [f, f, t, f], [f, f, t, f], [t, t, t, f], [f, t, t, f]]
-                         , [[t, f, f, f], [t, f, t, f], [f, t, t, f], [f, f, f, f], [f, t, f, f]]
-                         , [[t, t, t, t], [f, t, f, f], [f, f, f, f], [f, t, f, f], [f, t, f, f]]
-                         , [[t, f, f, f], [f, f, f, f], [t, f, f, t], [f, f, f, f], [t, t, t, t]]
-                         , [[t, f, f, t], [t, f, f, t], [f, f, f, t], [t, t, t, t], [f, t, f, t]]
-                         ]
+            fromGrid (visibilities parsed) `shouldBe`
+              [ [[t, f, t, f], [f, f, t, f], [f, f, t, f], [t, t, t, f], [f, t, t, f]]
+              , [[t, f, f, f], [t, f, t, f], [f, t, t, f], [f, f, f, f], [f, t, f, f]]
+              , [[t, t, t, t], [f, t, f, f], [f, f, f, f], [f, t, f, f], [f, t, f, f]]
+              , [[t, f, f, f], [f, f, f, f], [t, f, f, t], [f, f, f, f], [t, t, t, t]]
+              , [[t, f, f, t], [t, f, f, t], [f, f, f, t], [t, t, t, t], [f, t, f, t]]
+              ]
 
         describe "leftToRight" do
           it "reports the correct left-to-right visibilities" do
             let t = True
                 f = False
-            fromGrid (leftToRight parsed)
-              `shouldBe` [ [t, f, f, t, f]
-                         , [t, t, f, f, f]
-                         , [t, f, f, f, f]
-                         , [t, f, t, f, t]
-                         , [t, t, f, t, f]
-                         ]
+            fromGrid (leftToRight parsed) `shouldBe`
+              [ [t, f, f, t, f]
+              , [t, t, f, f, f]
+              , [t, f, f, f, f]
+              , [t, f, t, f, t]
+              , [t, t, f, t, f]
+              ]
 
         describe "isLeftVisible" do
           it "reports the correct left-to-right visibilities" do
@@ -83,13 +77,13 @@ solver =
 
         describe "scenicScores" do
           it "assigns the correct scores to each location" do
-            fromGrid (scenicScores parsed)
-              `shouldBe` [ [0, 0, 0, 0, 0]
-                         , [0, 1, 4, 1, 0]
-                         , [0, 6, 1, 2, 0]
-                         , [0, 1, 8, 3, 0]
-                         , [0, 0, 0, 0, 0]
-                         ]
+            fromGrid (scenicScores parsed) `shouldBe`
+              [ [0, 0, 0, 0, 0]
+              , [0, 1, 4, 1, 0]
+              , [0, 6, 1, 2, 0]
+              , [0, 1, 8, 3, 0]
+              , [0, 0, 0, 0, 0]
+              ]
 
         describe "leftScores" do
           it "assigns the correct scores to each location" do

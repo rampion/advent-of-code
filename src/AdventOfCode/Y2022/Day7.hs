@@ -36,7 +36,7 @@ solver = Solver
         8033020 d.log
         5626152 d.ext
         7214296 k
-      |]
+      |] <> "\n"
     , parsed = 
       [ CD Outermost
       , LS 

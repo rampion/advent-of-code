@@ -12,7 +12,7 @@ solver = Solver
   , part1
   , part2
   , spec = check parser part1 part2 Example
-    { raw = [text|
+    { raw = (<> "\n") [text|
         vJrwpWtwJgWrhcsFMMfFFhFp
         jqHRNqRjqzjGDLGLrsFMfFZSrLrFZsSL
         PmmdzqPrVvPwwTWBwg

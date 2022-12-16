@@ -7,7 +7,7 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = check parser part1 part2 Example
+  , spec = xcheck parser part1 part2 Example
     { raw = [text|
       |]
     , parsed = error "unknown"

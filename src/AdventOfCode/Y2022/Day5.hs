@@ -5,6 +5,8 @@ import AdventOfCode.Y2022.Prelude
 import Data.IntMap qualified as IntMap
 import Data.List (foldl', transpose)
 import Data.Maybe (catMaybes)
+import Data.Text qualified as Text
+import Data.Function ((&))
 
 solver :: Solver
 solver = Solver
@@ -13,16 +15,16 @@ solver = Solver
   , part2
   , spec = check parser part1 part2 Example
     { raw = [text|
-            [D]    
-        [N] [C]    
-        [Z] [M] [P]
-         1   2   3 
-
-        move 1 from 2 to 1
-        move 3 from 1 to 3
-        move 2 from 2 to 1
-        move 1 from 1 to 2
-      |]
+      |     [D]    
+      | [N] [C]    
+      | [Z] [M] [P]
+      |  1   2   3 
+      |
+      | move 1 from 2 to 1
+      | move 3 from 1 to 3
+      | move 2 from 2 to 1
+      | move 1 from 1 to 2
+      |] & Text.unlines . map (Text.drop 2) . Text.lines
     , parsed = Day5Input
         { crateStacks = IntMap.fromList [(1, "NZ"), (2, "DCM"), (3, "P")]
         , procedure =
