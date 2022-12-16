@@ -10,7 +10,7 @@ solver =
     { parser
     , part1
     , part2
-    , spec = fdescribe "bah" do
+    , spec = do
         let exampleInput =
               [ Report {sensor = XY {x = 2, y = 18}, beacon = XY {x = -2, y = 15}}
               , Report {sensor = XY {x = 9, y = 16}, beacon = XY {x = 10, y = 16}}
@@ -28,31 +28,27 @@ solver =
               , Report {sensor = XY {x = 20, y = 1}, beacon = XY {x = 15, y = 3}}
               ]
 
-        it "reports the correct output for part 1 of the example" do
-          part1 exampleInput `shouldBe` 26
-
-        check parser (part1y 10) part2 Example
-            { raw =
-                [text|
-                  Sensor at x=2, y=18: closest beacon is at x=-2, y=15
-                  Sensor at x=9, y=16: closest beacon is at x=10, y=16
-                  Sensor at x=13, y=2: closest beacon is at x=15, y=3
-                  Sensor at x=12, y=14: closest beacon is at x=10, y=16
-                  Sensor at x=10, y=20: closest beacon is at x=10, y=16
-                  Sensor at x=14, y=17: closest beacon is at x=10, y=16
-                  Sensor at x=8, y=7: closest beacon is at x=2, y=10
-                  Sensor at x=2, y=0: closest beacon is at x=2, y=10
-                  Sensor at x=0, y=11: closest beacon is at x=2, y=10
-                  Sensor at x=20, y=14: closest beacon is at x=25, y=17
-                  Sensor at x=17, y=20: closest beacon is at x=21, y=22
-                  Sensor at x=16, y=7: closest beacon is at x=15, y=3
-                  Sensor at x=14, y=3: closest beacon is at x=15, y=3
-                  Sensor at x=20, y=1: closest beacon is at x=15, y=3
-                |] <> "\n"
-            , parsed = exampleInput
-            , part1output = 26
-            , part2output = [56_000_011]
-            }
+        check parser (part1y 10) (part2s 20) Example
+          { raw = [text|
+                Sensor at x=2, y=18: closest beacon is at x=-2, y=15
+                Sensor at x=9, y=16: closest beacon is at x=10, y=16
+                Sensor at x=13, y=2: closest beacon is at x=15, y=3
+                Sensor at x=12, y=14: closest beacon is at x=10, y=16
+                Sensor at x=10, y=20: closest beacon is at x=10, y=16
+                Sensor at x=14, y=17: closest beacon is at x=10, y=16
+                Sensor at x=8, y=7: closest beacon is at x=2, y=10
+                Sensor at x=2, y=0: closest beacon is at x=2, y=10
+                Sensor at x=0, y=11: closest beacon is at x=2, y=10
+                Sensor at x=20, y=14: closest beacon is at x=25, y=17
+                Sensor at x=17, y=20: closest beacon is at x=21, y=22
+                Sensor at x=16, y=7: closest beacon is at x=15, y=3
+                Sensor at x=14, y=3: closest beacon is at x=15, y=3
+                Sensor at x=20, y=1: closest beacon is at x=15, y=3
+              |] <> "\n"
+          , parsed = exampleInput
+          , part1output = 26
+          , part2output = [56_000_011]
+          }
 
         it "reports the correct ineligble segments for part 1 of the example" do
           findSegments 10 exampleInput `shouldBe` [(-2, 1), (3, 24)]

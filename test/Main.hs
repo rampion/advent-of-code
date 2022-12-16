@@ -7,4 +7,5 @@ import Prelude
 
 main :: IO ()
 main = hspec do
-  forM_ solvers \(name, Solver {spec}) -> describe name spec
+  forM_ solvers \(name, Solver {spec}) ->
+    describe name spec
