@@ -1,6 +1,6 @@
 module AdventOfCode.Y2022.Day14 where
 
-import AdventOfCode.Y2022.Prelude
+import AdventOfCode.Y2022.Prelude hiding (between)
 import Data.Set qualified as Set
 import Data.Map qualified as Map
 
@@ -10,7 +10,12 @@ solver = Solver
   , part1
   , part2
   , spec = tellSpec do
-      runCheck solver Example
+      let exampleInput = 
+            [ RockShape [ Point{right=498,down=4}, Point{right=498,down=6}, Point{right=496,down=6} ]
+            , RockShape [ Point{right=503,down=4}, Point{right=502,down=4}, Point{right=502,down=9}, Point{right=494,down=9} ]
+            ]
+
+      runCheck parser part1 part2 Example
         { raw = [text|
             498,4 -> 498,6 -> 496,6
             503,4 -> 502,4 -> 502,9 -> 494,9
@@ -50,9 +55,11 @@ solver = Solver
           }
   }
 
+type RockShape :: Type
 newtype RockShape = RockShape [Point]
   deriving stock (Show, Eq)
 
+type Point :: Type
 data Point = Point { right :: Int, down :: Int } 
   deriving stock (Show, Eq, Ord)
 
@@ -66,6 +73,7 @@ parser = rockShape `endBy` newline where
   point = Point <$> int <* char ',' <*> int
   int = read <$> some digit
 
+type Cave :: Type
 data Cave = Cave
   { leftEdge :: Int
   , rightEdge :: Int
@@ -104,16 +112,17 @@ makeCave rockShapes = Cave
 between :: Int -> Int -> [Int]
 between a b = [min a b .. max a b]
 
+type FillMaterial :: Type
 data FillMaterial = AirFilled | RockFilled | SandFilled
   deriving stock (Eq, Show)
 
 fillCave :: Cave -> Cave
 fillCave cave@Cave{leftEdge,rightEdge,bottomEdge,caveContents} = cave { caveContents = snd (loop source caveContents) } where
-  loop p@Point{down,right} state  = case check p state of
+  loop p@Point{down,right} state  = case fill p state of
     Just m -> (m, state)
-    Nothing -> fall p [p{down=down+1},p{down=down+1,right=right-1},p{down=down+1,right=right+1}] state
+    Nothing -> fall p [p{down=down + 1},p{down=down + 1,right=right - 1},p{down=down + 1,right=right + 1}] state
 
-  check p state
+  fill p state
     | outOfBounds p = Just AirFilled
     | otherwise = Map.lookup p state
 
@@ -144,10 +153,10 @@ addFloor Cave{leftEdge,rightEdge,bottomEdge,caveContents} = newCave where
     [ (Point{right,down}, RockFilled) | let down = newBottomEdge, right <- [newLeftEdge .. newRightEdge] ]
 
 part1 :: [RockShape] -> Int
-part1 = Map.size . Map.filter (==SandFilled) . caveContents . fillCave . makeCave
+part1 = Map.size . Map.filter (== SandFilled) . caveContents . fillCave . makeCave
 
 part2 :: [RockShape] -> Int
-part2 = Map.size . Map.filter (==SandFilled) . caveContents . fillCave . addFloor . makeCave
+part2 = Map.size . Map.filter (== SandFilled) . caveContents . fillCave . addFloor . makeCave
 
 {-
 part2 :: [RockShape] -> Cave

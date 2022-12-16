@@ -11,6 +11,7 @@ dependencies:
   - mtl
   - vector
   - neat-interpolation
+  - text
 
 executables:
   advent-of-code:
@@ -78,6 +79,7 @@ default-extensions:
   - OverloadedStrings
   - PatternSynonyms
   - PolyKinds
+  - QuasiQuotes
   - RankNTypes
   - RecordWildCards
   - RecursiveDo

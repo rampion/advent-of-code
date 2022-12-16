@@ -27,7 +27,7 @@ solver = Solver
                   ,  Vector.fromList [0,  1,  3,  4,  5,  6,  7,  8]
                   ]
             }
-      runCheck solver Example
+      runCheck parser part1 part2 Example
         { raw = [text|
             Sabqponm
             abcryxxl
@@ -63,6 +63,7 @@ solver = Solver
             ]
     }
 
+type HeightMap :: Type
 data HeightMap = HeightMap
   { currentPosition :: Position
   , bestSignal :: Position
@@ -70,10 +71,12 @@ data HeightMap = HeightMap
   }
   deriving stock (Show, Eq)
 
+type ElevationGrid :: Type -> Type
 newtype ElevationGrid a = ElevationGrid { fromElevationGrid :: Vector.Vector (Vector.Vector a) }
   deriving newtype (Show, Eq)
   deriving stock (Functor, Foldable)
 
+type Position :: Type
 data Position = Position
   { column :: Int
   , row :: Int

@@ -2,7 +2,7 @@
 
 module Main where
 
-import AdventOfCode (solvers)
+import AdventOfCode (Solver(..),solvers)
 import Control.Monad (unless)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as LBS
@@ -14,9 +14,11 @@ import Network.HTTP.Types.Status (statusCode)
 import Options.Generic (Generic, ParseField, ParseRecord, getRecord)
 import System.Directory (doesFileExist)
 import System.Exit (die)
-import Text.Parsec.String (parseFromFile)
+import Text.Parsec.Text (parseFromFile)
 import Prelude
+import Data.Kind (Type)
 
+type App :: Type
 data App = App String (Maybe Part)
   deriving stock (Generic, Show)
 
@@ -26,6 +28,7 @@ data App = App String (Maybe Part)
 
 instance ParseRecord App
 
+type Part :: Type
 data Part = Part1 | Part2
   deriving stock (Read, Show, Generic)
 

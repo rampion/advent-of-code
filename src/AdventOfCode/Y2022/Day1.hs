@@ -10,7 +10,7 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = check solver Example
+  , spec = check parser part1 part2 Example
     { raw = [text|
         1000
         2000

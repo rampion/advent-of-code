@@ -2,8 +2,7 @@
 module AdventOfCode.Y2022.Day11 where
 
 import AdventOfCode.Y2022.Prelude
-import Data.Foldable (asum)
-import Data.IntMap
+import Data.IntMap qualified as IntMap
 import Data.Ord (Down(..))
 import Data.List (sort, foldl', transpose, unfoldr)
 import Data.Coerce (coerce)
@@ -56,7 +55,7 @@ solver = Solver
               }
             ]
 
-      runCheck solver Example
+      runCheck parser part1 part2 Example
         { raw = [text|
             Monkey 0:
               Starting items: 79, 98
@@ -106,19 +105,32 @@ solver = Solver
         inspectionsIn Nothing 1000 exampleInput `shouldBe` [5204,4792,199,5192]
   }
 
+type MonkeyId :: Type
 type MonkeyId = Int
-type WorryLevel = Int
-type Throw = (MonkeyId, WorryLevel)
-type Turn = [WorryLevel]
-type Round = [Turn]
-type MonkeyMap = IntMap
 
+type WorryLevel :: Type
+type WorryLevel = Int
+
+type Throw :: Type
+type Throw = (MonkeyId, WorryLevel)
+
+type Turn :: Type
+type Turn = [WorryLevel]
+
+type Round :: Type
+type Round = [Turn]
+
+type MonkeyMap :: Type -> Type
+type MonkeyMap = IntMap.IntMap
+
+type Note :: Type
 data Note = Note
   { items :: [WorryLevel]
   , monkey :: Monkey
   }
   deriving stock (Show, Eq)
 
+type Monkey :: Type
 data Monkey = Monkey
   { operation :: Operation
   , divisibleBy :: WorryLevel
@@ -127,6 +139,7 @@ data Monkey = Monkey
   }
   deriving stock (Show, Eq)
 
+type Operation :: Type
 data Operation
   = Plus WorryLevel
   | Times WorryLevel
@@ -166,10 +179,10 @@ countInspections :: [Turn] -> Int
 countInspections = sum . fmap length
 
 rounds :: Maybe (WorryLevel -> WorryLevel) -> [Note] -> [Round]
-rounds moderate (fromList . zip [0..] -> notes) = chunksOf (size notes) do 
+rounds moderate (IntMap.fromList . zip [0..] -> notes) = chunksOf (IntMap.size notes) do 
   unfoldr 
-    do nextTurn (mapWithKey (\k -> behaviour m k . monkey) notes) 
-    do (empty, fmap (reverse . items) notes)
+    do nextTurn (IntMap.mapWithKey (\k -> behaviour m k . monkey) notes) 
+    do (IntMap.empty, fmap (reverse . items) notes)
   where
     m = fromMaybe (`rem` modulus) moderate
     modulus = product (divisibleBy . monkey <$> notes)
@@ -183,8 +196,8 @@ behaviour moderate monkeyId Monkey
   } = flip inspectAndThrow
   where
     inspect = moderate . case operation of
-      Plus n -> (+n)
-      Times n -> (*n)
+      Plus n -> (+ n)
+      Times n -> (* n)
       Square -> join (*)
 
     nextMonkey newLevel
@@ -198,19 +211,20 @@ behaviour moderate monkeyId Monkey
     inspectAndThrow oldLevel =
       let newLevel = inspect oldLevel
           nextMonkeyId = nextMonkey newLevel
-      in switch nextMonkeyId (adjust (newLevel:) nextMonkeyId)
+      in switch nextMonkeyId (IntMap.adjust (newLevel:) nextMonkeyId)
 
+type TurnState :: Type
 type TurnState = (MonkeyMap [WorryLevel], MonkeyMap [WorryLevel])
 
 nextTurn :: MonkeyMap (TurnState -> WorryLevel -> TurnState)  -> TurnState -> Maybe (Turn, TurnState)
 nextTurn inspectAndThrow = go where
-  go (lt, gte) = case minViewWithKey gte of
-    Nothing -> go (empty, lt)
+  go (lt, gte) = case IntMap.minViewWithKey gte of
+    Nothing -> go (IntMap.empty, lt)
     Just ((monkeyId, reverse -> items), gt) -> Just
       ( items
       , Data.List.foldl'
-          do inspectAndThrow ! monkeyId 
-          do (insert monkeyId [] lt, gt)
+          do inspectAndThrow IntMap.! monkeyId 
+          do (IntMap.insert monkeyId [] lt, gt)
           do items
       )
 

@@ -1,6 +1,7 @@
 module AdventOfCode.Y2022 (Solver(..), solvers) where
 import AdventOfCode.Solver (Solver(..))
 import Data.Map qualified as Map
+import Prelude
 
 import AdventOfCode.Y2022.Day1 qualified as Day1
 import AdventOfCode.Y2022.Day2 qualified as Day2

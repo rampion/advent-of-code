@@ -1,7 +1,6 @@
 module AdventOfCode.Y2022.Day7 where
 
 import AdventOfCode.Y2022.Prelude
-import Data.Foldable (asum)
 import Data.String (IsString)
 import Data.Map.Strict qualified as Map
 import Data.List qualified as List
@@ -12,7 +11,7 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = check solver Example
+  , spec = check parser part1 part2 Example
     { raw = [text|
         $ cd /
         $ ls
@@ -72,21 +71,27 @@ solver = Solver
     }
   }
 
+type CommandLog :: Type
 data CommandLog = CD Path | LS [Listing]
   deriving stock (Show, Eq)
 
+type Path :: Type
 data Path = Outermost | In DirName | Out
   deriving stock (Show, Eq)
 
+type Listing :: Type
 data Listing = Dir DirName | File Int FileName
   deriving stock (Show, Eq)
 
+type DirName :: Type
 newtype DirName = DirName String
   deriving newtype (Show, Eq, Ord, IsString)
 
+type FileName :: Type
 newtype FileName = FileName String
   deriving newtype (Show, Eq, Ord, IsString)
 
+type DirPath :: Type
 type DirPath = [DirName]
 
 parser :: Parser [CommandLog]
@@ -125,7 +130,7 @@ dirSizes
 
 loeb :: Functor f => f (f a -> a) -> f a
 loeb formulae = values where
-  values = fmap ($values) formulae
+  values = fmap ($ values) formulae
 
 part1 :: [CommandLog] -> Int
 part1

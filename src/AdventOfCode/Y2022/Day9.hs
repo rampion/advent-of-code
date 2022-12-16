@@ -10,7 +10,7 @@ solver = Solver
   , part1
   , part2
   , spec = tellSpec do
-      runCheck solver Example
+      runCheck parser part1 part2 Example
         { raw = [text|
             R 4
             U 4
@@ -51,7 +51,10 @@ solver = Solver
   }
 
 
+type Motion :: Type
 type Motion = (Direction, Int)
+
+type Direction :: Type
 data Direction = L | U | R | D
   deriving stock (Show, Eq, Read)
 
@@ -123,6 +126,7 @@ toTailCoords = scanl1 follow where
     where dx = hx - tx
           dy = hy - ty
 
+type Coord :: Type -> Type
 data Coord a = Coord !a !a
   deriving stock (Show, Eq, Ord)
 

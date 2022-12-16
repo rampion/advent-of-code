@@ -11,7 +11,7 @@ solver = Solver
   { parser
   , part1
   , part2
-  , spec = check solver Example
+  , spec = check parser part1 part2 Example
     { raw = [text|
             [D]    
         [N] [C]    
@@ -37,12 +37,14 @@ solver = Solver
     }
   }
 
+type Day5Input :: Type
 data Day5Input = Day5Input
   { crateStacks :: IntMap.IntMap String
   , procedure :: [Step]
   }
   deriving stock (Eq, Show)
 
+type Step :: Type
 data Step = Step
   { move :: Int
   , from :: Int

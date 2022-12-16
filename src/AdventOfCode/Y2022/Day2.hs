@@ -4,64 +4,78 @@ import AdventOfCode.Y2022.Prelude
 import Control.Comonad
 
 solver :: Solver
-solver = Solver
-  { parser
-  , part1
-  , part2
-  , spec = check solver Example
-    { raw = [text|
+solver =
+  Solver
+    { parser
+    , part1
+    , part2
+    , spec =
+        check
+          parser
+          part1
+          part2
+          Example
+            { raw =
+                [text|
         A Y
         B X
         C Z
       |]
-    , parsed = 
-      [ (Rock, Y)
-      , (Paper, X)
-      , (Scissors, Z)
-      ]
-    , part1output = 15
-    , part2output = 12
+            , parsed =
+                [ (Rock, Y)
+                , (Paper, X)
+                , (Scissors, Z)
+                ]
+            , part1output = 15
+            , part2output = 12
+            }
     }
-  }
 
+type RockPaperScissors :: Type
 data RockPaperScissors = Rock | Paper | Scissors
   deriving stock (Show, Eq, Enum)
 
+type LoseDrawWin :: Type
 data LoseDrawWin = Lose | Draw | Win
   deriving stock (Show, Eq)
 
+type XYZ :: Type
 data XYZ = X | Y | Z
   deriving stock (Show, Eq)
 
 parser :: Parser [(RockPaperScissors, XYZ)]
-parser = line `endBy` newline where
-  line = (,) <$> abc <* space <*> xyz
-  abc = Rock <$ char 'A' <|> Paper <$ char 'B' <|> Scissors <$ char 'C'
-  xyz = X <$ char 'X' <|> Y <$ char 'Y' <|> Z <$ char 'Z'
+parser = line `endBy` newline
+  where
+    line = (,) <$> abc <* space <*> xyz
+    abc = Rock <$ char 'A' <|> Paper <$ char 'B' <|> Scissors <$ char 'C'
+    xyz = X <$ char 'X' <|> Y <$ char 'Y' <|> Z <$ char 'Z'
 
 part1 :: [(RockPaperScissors, XYZ)] -> Int
 part1 = totalScore . fmap (fmap toABC)
-  where toABC X = Rock
-        toABC Y = Paper
-        toABC Z = Scissors
+  where
+    toABC X = Rock
+    toABC Y = Paper
+    toABC Z = Scissors
 
 part2 :: [(RockPaperScissors, XYZ)] -> Int
 part2 = totalScore . fmap ((=>> toABC) . fmap toLoseDrawWin)
-  where toABC = uncurry reply
+  where
+    toABC = uncurry reply
 
-        toLoseDrawWin X = Lose
-        toLoseDrawWin Y = Draw
-        toLoseDrawWin Z = Win
+    toLoseDrawWin X = Lose
+    toLoseDrawWin Y = Draw
+    toLoseDrawWin Z = Win
 
 reply :: RockPaperScissors -> LoseDrawWin -> RockPaperScissors
-reply opp goal = head [ you | you <- [Rock, Paper, Scissors], play opp you == goal ]
-  {-
+reply opp goal = head [you | you <- [Rock, Paper, Scissors], play opp you == goal]
+
+{-
 reply opp Lose = toEnum do (fromEnum opp + 2) `rem` 3
 reply opp Draw = opp
 reply opp Win  = toEnum do (fromEnum opp + 1) `rem` 3
 -}
 
-totalScore :: [(RockPaperScissors,RockPaperScissors)] -> Int
+totalScore :: [(RockPaperScissors, RockPaperScissors)] -> Int
 totalScore = sum . map (uncurry roundScore)
 
 roundScore :: RockPaperScissors -> RockPaperScissors -> Int
