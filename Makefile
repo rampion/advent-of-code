@@ -1,5 +1,9 @@
+ifndef part
+  part := 1
+endif
+
 run: advent-of-code.cabal
-	cabal run advent-of-code -- "$(day)" $(part)
+	cabal run advent-of-code -- "$(day)" Part$(part)
 
 ghcid: advent-of-code.cabal
 	ghcid --target advent-of-code

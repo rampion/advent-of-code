@@ -6,9 +6,11 @@ dependencies:
   - parsec
   - comonad
   - containers >= 0.6.4.1 && <0.7.0
+  - hspec
   - directory
   - mtl
   - vector
+  - neat-interpolation
 
 executables:
   advent-of-code:
@@ -29,8 +31,6 @@ tests:
     source-dirs:
       - src
       - test
-    dependencies:
-      - hspec
 
 # from https://medium.com/mercury-bank/enable-all-the-warnings-a0517bc081c3
 ghc-options:
