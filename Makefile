@@ -9,7 +9,7 @@ ghcid: advent-of-code.cabal
 	ghcid --target advent-of-code
 
 ghcid-test: advent-of-code.cabal
-	ghcid --target test --run
+	ghcid --target test --run=":main --match=2023"
 
 advent-of-code.cabal: package.yaml $(wildcard src/*.hs app/*.hs test/*.hs)
 	hpack --force .
