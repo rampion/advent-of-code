@@ -1,5 +1,5 @@
 module AdventOfCode.Y2023.Prelude
-  ( module X
+  ( module X,
   )
 where
 

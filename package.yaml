@@ -86,6 +86,7 @@ default-extensions:
   - ScopedTypeVariables
   - StandaloneDeriving
   - StandaloneKindSignatures
+  - TupleSections
   - TypeApplications
   - TypeFamilies
   - ViewPatterns

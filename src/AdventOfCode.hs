@@ -6,8 +6,7 @@ import AdventOfCode.Y2023 qualified as Y2023
 import Prelude
 
 solvers :: [(String, Solver)]
-solvers =
-  concat
-    [ Y2022.solvers
-    , Y2023.solvers
-    ]
+solvers = concat
+  [ Y2022.solvers
+  , Y2023.solvers
+  ]
