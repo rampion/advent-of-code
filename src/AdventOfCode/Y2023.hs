@@ -5,7 +5,7 @@ import AdventOfCode.Y2023.Day1 qualified as Day1
 import AdventOfCode.Y2023.Day2 qualified as Day2
 import AdventOfCode.Y2023.Day3 qualified as Day3
 import AdventOfCode.Y2023.Day4 qualified as Day4
--- import AdventOfCode.Y2023.Day5 qualified as Day5
+import AdventOfCode.Y2023.Day5 qualified as Day5
 -- import AdventOfCode.Y2023.Day6 qualified as Day6
 -- import AdventOfCode.Y2023.Day7 qualified as Day7
 -- import AdventOfCode.Y2023.Day8 qualified as Day8
@@ -34,7 +34,7 @@ solvers =
   , ("2023/day/2", Day2.solver)
   , ("2023/day/3", Day3.solver)
   , ("2023/day/4", Day4.solver)
-  -- , ("2023/day/5", Day5.solver)
+  , ("2023/day/5", Day5.solver)
   -- , ("2023/day/6", Day6.solver)
   -- , ("2023/day/7", Day7.solver)
   -- , ("2023/day/8", Day8.solver)
