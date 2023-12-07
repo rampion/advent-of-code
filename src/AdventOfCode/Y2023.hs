@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wno-unused-imports #-}
+
 module AdventOfCode.Y2023 (Solver (..), solvers) where
 
 import AdventOfCode.Solver (Solver (..))
@@ -7,25 +9,25 @@ import AdventOfCode.Y2023.Day3 qualified as Day3
 import AdventOfCode.Y2023.Day4 qualified as Day4
 import AdventOfCode.Y2023.Day5 qualified as Day5
 import AdventOfCode.Y2023.Day6 qualified as Day6
--- import AdventOfCode.Y2023.Day7 qualified as Day7
--- import AdventOfCode.Y2023.Day8 qualified as Day8
--- import AdventOfCode.Y2023.Day9 qualified as Day9
--- import AdventOfCode.Y2023.Day10 qualified as Day10
--- import AdventOfCode.Y2023.Day11 qualified as Day11
--- import AdventOfCode.Y2023.Day12 qualified as Day12
--- import AdventOfCode.Y2023.Day13 qualified as Day13
--- import AdventOfCode.Y2023.Day14 qualified as Day14
--- import AdventOfCode.Y2023.Day15 qualified as Day15
--- import AdventOfCode.Y2023.Day16 qualified as Day16
--- import AdventOfCode.Y2023.Day17 qualified as Day17
--- import AdventOfCode.Y2023.Day18 qualified as Day18
--- import AdventOfCode.Y2023.Day19 qualified as Day19
--- import AdventOfCode.Y2023.Day20 qualified as Day20
--- import AdventOfCode.Y2023.Day21 qualified as Day21
--- import AdventOfCode.Y2023.Day22 qualified as Day22
--- import AdventOfCode.Y2023.Day23 qualified as Day23
--- import AdventOfCode.Y2023.Day24 qualified as Day24
--- import AdventOfCode.Y2023.Day25 qualified as Day25
+import AdventOfCode.Y2023.Day7 qualified as Day7
+import AdventOfCode.Y2023.Day8 qualified as Day8
+import AdventOfCode.Y2023.Day9 qualified as Day9
+import AdventOfCode.Y2023.Day10 qualified as Day10
+import AdventOfCode.Y2023.Day11 qualified as Day11
+import AdventOfCode.Y2023.Day12 qualified as Day12
+import AdventOfCode.Y2023.Day13 qualified as Day13
+import AdventOfCode.Y2023.Day14 qualified as Day14
+import AdventOfCode.Y2023.Day15 qualified as Day15
+import AdventOfCode.Y2023.Day16 qualified as Day16
+import AdventOfCode.Y2023.Day17 qualified as Day17
+import AdventOfCode.Y2023.Day18 qualified as Day18
+import AdventOfCode.Y2023.Day19 qualified as Day19
+import AdventOfCode.Y2023.Day20 qualified as Day20
+import AdventOfCode.Y2023.Day21 qualified as Day21
+import AdventOfCode.Y2023.Day22 qualified as Day22
+import AdventOfCode.Y2023.Day23 qualified as Day23
+import AdventOfCode.Y2023.Day24 qualified as Day24
+import AdventOfCode.Y2023.Day25 qualified as Day25
 import Prelude
 
 solvers :: [(String, Solver)]
