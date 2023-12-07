@@ -3,9 +3,8 @@
 module AdventOfCode.Y2023.Day6 where
 
 import AdventOfCode.Y2023.Prelude
-import Data.Maybe (fromMaybe)
 import Data.List (find)
-import Data.Functor ((<&>))
+import Data.Function ((&))
 
 solver :: Solver
 solver = Solver
@@ -56,10 +55,10 @@ part1 = product . fmap recordBeatingCount
 
 recordBeatingCount :: Race -> Integer
 -- recordBeatingCount (Race t d) = sum [ 1 | s <- [0..t], s * (t - s) > d ]
-recordBeatingCount (Race t d) = fromMaybe 0 do
-  find (\s -> s * (t -s) > d) [0..t] <&> \s -> t - 2*s + 1
+recordBeatingCount (Race t d) = maybe 0
+  do \s -> t - 2*s + 1
+  do [0..t] & find \s -> s * (t -s) > d
     
-
 part2 :: Input -> Integer
 part2 = recordBeatingCount . merge
 
@@ -67,6 +66,5 @@ merge :: [Race] -> Race
 merge = liftA2 Race 
   do convert milliseconds
   do convert millimeters
-
   where
     convert f = read . concatMap (show . f)
