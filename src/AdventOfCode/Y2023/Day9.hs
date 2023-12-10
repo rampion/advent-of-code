@@ -10,27 +10,40 @@ solver = Solver
   , part1
   , part2
   , spec = do
+      let firstExample = 
+            [ [0, 3, 6, 9, 12, 15] 
+            , [1, 3, 6, 10, 15, 21]
+            , [10, 13, 16, 21, 30, 45] 
+            ]
+
       check parser part1 part2 Example
         { raw = (<> "\n") [text|
+            0 3 6 9 12 15
+            1 3 6 10 15 21
+            10 13 16 21 30 45
           |]
-        , parsed
-        , part1output = ()
-        , part2output = ()
+        , parsed = firstExample
+        , part1output = 114
+        , part2output = 2
         }
   }
 
-parsed :: Input
-parsed = Input
-
 type Input :: Type
-data Input = Input
-  deriving stock (Show, Eq)
+type Input = [[Int]]
 
 parser :: Parser Input
-parser = pure Input
+parser = (int `sepBy` space) `endBy` newline where
+  int = (negate <$ char '-' <*> nat) <|> nat
+  nat = read <$> some digit
+  space = char ' '
 
-part1 :: Input -> ()
-part1 _ = ()
+part1 :: Input -> Int
+part1 = sum . map (extrapolate . reverse)
 
-part2 :: Input -> ()
-part2 _ = ()
+extrapolate :: [Int] -> Int
+extrapolate [] = 0
+extrapolate as | all (== 0) as = 0
+extrapolate as@(a:at) = a + extrapolate (zipWith (-) as at)
+
+part2 :: Input -> Int
+part2 = sum . map extrapolate

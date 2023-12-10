@@ -8,8 +8,9 @@ run: advent-of-code.cabal
 ghcid: advent-of-code.cabal
 	ghcid --target advent-of-code
 
+match := 2023
 ghcid-test: advent-of-code.cabal
-	ghcid --target test --run=":main --match=2023"
+	ghcid --target test --run=":main --match=$(match)"
 
 advent-of-code.cabal: package.yaml $(wildcard src/*.hs app/*.hs test/*.hs)
 	hpack --force .
