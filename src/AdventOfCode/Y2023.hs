@@ -39,7 +39,7 @@ solvers =
   , ("2023/day/5", Day5.solver)
   , ("2023/day/6", Day6.solver)
   , ("2023/day/7", Day7.solver)
-  -- , ("2023/day/8", Day8.solver)
+  , ("2023/day/8", Day8.solver)
   -- , ("2023/day/9", Day9.solver)
   -- , ("2023/day/10", Day10.solver)
   -- , ("2023/day/11", Day11.solver)
