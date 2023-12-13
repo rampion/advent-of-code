@@ -5,7 +5,6 @@
 module AdventOfCode.Y2023.Day8 where
 
 import AdventOfCode.Y2023.Prelude
-import Data.Functor (($>))
 import Control.Monad (replicateM, guard)
 import Data.Map.Strict qualified as Map
 

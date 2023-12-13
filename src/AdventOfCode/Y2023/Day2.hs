@@ -6,7 +6,6 @@ module AdventOfCode.Y2023.Day2 where
 
 import AdventOfCode.Y2023.Prelude
 import Data.Coerce (Coercible, coerce)
-import Data.Functor (($>))
 import Data.Monoid (Sum (..))
 import Data.Semigroup (Max (..))
 

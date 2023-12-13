@@ -3,7 +3,6 @@
 module AdventOfCode.Y2023.Day7 where
 
 import Control.Monad (replicateM)
-import Data.Functor (($>))
 import AdventOfCode.Y2023.Prelude
 import Data.List (sortBy, sort, foldl')
 import Control.Arrow (first, (&&&))

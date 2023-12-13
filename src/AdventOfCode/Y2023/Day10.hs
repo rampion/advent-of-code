@@ -7,7 +7,6 @@ import Data.List (maximumBy)
 import Data.Ord (comparing)
 import Control.Monad (guard)
 import AdventOfCode.Y2023.Prelude
-import Data.Functor (($>))
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 

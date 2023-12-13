@@ -4,7 +4,6 @@
 module AdventOfCode.Y2023.Day11 where
 
 import AdventOfCode.Y2023.Prelude
-import Data.Functor (($>))
 import Data.List (tails, transpose)
 import Data.Bool (bool)
 

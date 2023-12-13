@@ -11,3 +11,4 @@ import NeatInterpolation as X (text)
 import Test.Hspec as X hiding (Example)
 import Text.Parsec as X hiding (many, optional, (<|>))
 import Prelude as X
+import Data.Functor as X (($>))
