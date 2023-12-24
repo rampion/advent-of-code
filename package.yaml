@@ -12,6 +12,7 @@ dependencies:
   - vector
   - neat-interpolation
   - text
+  - transformers
 
 executables:
   advent-of-code:
