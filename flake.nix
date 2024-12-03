@@ -10,7 +10,7 @@
 
   outputs = { self, nixpkgs, flake-utils }:
     let
-      ghcVer = "ghc924";
+      ghcVer = "ghc910";
       makeHaskellOverlay = overlay: final: prev: {
         haskell = prev.haskell // {
           packages = prev.haskell.packages // {
@@ -52,12 +52,9 @@
               packages = p: [ self.packages.${system}.advent-of-code ];
               withHoogle = true;
               buildInputs = with haskellPackages; [
-                haskell-language-server
-                fourmolu
-                ghcid
                 cabal-install
-                fast-tags
               ] ++ (with pkgs; [
+                ghciwatch
                 sqlite
                 zlib
               ]);
