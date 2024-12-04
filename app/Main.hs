@@ -1,101 +1,202 @@
-{-# OPTIONS_GHC -Wall -Wextra -Werror -Wno-name-shadowing #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LexicalNegation #-}
-{-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -Wall -Wextra -Werror -Wno-name-shadowing #-}
 
 module Main where
 
-import Control.Monad (unless, replicateM)
+import Control.Monad (guard, unless)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as LBS
+import Data.Function (fix)
+import Data.List (zipWith5)
+import Data.Time (Day, defaultTimeLocale, formatTime, fromGregorian)
+import NeatInterpolation (text)
 import Network.HTTP.Client
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.HTTP.Types.Status (statusCode)
-import NeatInterpolation (text)
 import System.Directory (doesFileExist)
 import System.Exit (die)
+import Test.Hspec (hspec, it, shouldBe)
 import Text.Parsec
-import Text.Parsec.Text (parseFromFile, Parser)
-import Test.Hspec (shouldBe, it, hspec)
+import Text.Parsec.Text (Parser, parseFromFile)
 import Prelude
-import Data.Time (Day, fromGregorian, formatTime, defaultTimeLocale)
 
 -- $> main
+
 main :: IO ()
 main = do
-  solveDay parse1 part1 $ fromGregorian 2024 12 03
+  solveDay parse1 part2 $ fromGregorian 2024 12 04
 
-data Instruction
-  = Mul Int Int
-  | Do
-  | Don't
+data Letter
+  = X
+  | M
+  | A
+  | S
   deriving (Show, Eq)
 
-unused :: ()
-unused = replicateM @IO `seq` ()
+parse1 :: Parser [[Letter]]
+parse1 = many letter `endBy1` newline
+  where
+    letter = choice [x, m, a, s]
+    x = X <$ char 'X'
+    m = M <$ char 'M'
+    a = A <$ char 'A'
+    s = S <$ char 'S'
 
-parse1 :: Parser [Instruction]
-parse1 = (next <*> parse1) <|> ([] <$ eof) where
-  next = ((:) <$> instruction) <|> (id <$ anyChar)
-  instruction = try mul <|> try don't <|> try do_
-  don't = Don't <$ string "don't()"
-  do_ = Do <$ string "do()"
-  mul = Mul <$ string "mul(" <*> int <* char ',' <*> int <* char ')'
-  int = read <$> many1 digit
+data SearchState = Next
+  { westToEast :: Letter
+  , eastToWest :: Letter
+  , northwestToSoutheast :: Letter
+  , southeastToNorthwest :: Letter
+  , northToSouth :: Letter
+  , southToNorth :: Letter
+  , northeastToSouthwest :: Letter
+  , southwestToNortheast :: Letter
+  }
+  deriving (Show, Eq)
 
-part1 :: [Instruction] -> Int
-part1 = fst . foldl' step init where
-  step (!n,op) = \case
-    Mul a b -> (n `op` (a * b), op)
-    Don't -> (n, const)
-    Do -> (n, (+))
-  init = (0, (+))
+blank :: SearchState
+blank =
+  Next
+    { westToEast = X
+    , eastToWest = S
+    , northwestToSoutheast = X
+    , southeastToNorthwest = S
+    , northToSouth = X
+    , southToNorth = S
+    , northeastToSouthwest = X
+    , southwestToNortheast = S
+    }
 
-firstExample :: [Instruction]
+part1 :: [[Letter]] -> Int
+part1 = sum . map sum . fst . buildTable
+
+buildTable :: [[Letter]] -> ([[Int]], [[SearchState]])
+buildTable ls = fix \(~(_, table)) -> unzip do
+  zipWith buildRow ls (repeat blank : table)
+
+buildRow :: [Letter] -> [SearchState] -> ([Int], [SearchState])
+buildRow cs above = fix \(~(_, row)) -> unzip do
+  zipWith5 buildCell cs (blank : row) (blank : above) above (drop 1 above ++ [blank])
+
+buildCell :: Letter -> SearchState -> SearchState -> SearchState -> SearchState -> (Int, SearchState)
+buildCell c Next {westToEast, eastToWest} Next {northwestToSoutheast, southeastToNorthwest} Next {northToSouth, southToNorth} Next {northeastToSouthwest, southwestToNortheast} =
+  ( length do
+      (expected, final) <-
+        [ (westToEast, S)
+          , (eastToWest, X)
+          , (northwestToSoutheast, S)
+          , (southeastToNorthwest, X)
+          , (northToSouth, S)
+          , (southToNorth, X)
+          , (northeastToSouthwest, S)
+          , (southwestToNortheast, X)
+          ]
+      guard $ c == expected && c == final
+  , Next
+      { westToEast = nextMatch westToEast c
+      , eastToWest = prevMatch eastToWest c
+      , northwestToSoutheast = nextMatch northwestToSoutheast c
+      , southeastToNorthwest = prevMatch southeastToNorthwest c
+      , northToSouth = nextMatch northToSouth c
+      , southToNorth = prevMatch southToNorth c
+      , northeastToSouthwest = nextMatch northeastToSouthwest c
+      , southwestToNortheast = prevMatch southwestToNortheast c
+      }
+  )
+
+nextMatch :: Letter -> Letter -> Letter
+nextMatch expected = \case
+  X -> M
+  c | c /= expected -> X
+  M -> A
+  A -> S
+  S -> X
+
+prevMatch :: Letter -> Letter -> Letter
+prevMatch expected = \case
+  S -> A
+  c | c /= expected -> S
+  A -> M
+  M -> X
+  X -> S
+
+firstExample :: [[Letter]]
 firstExample =
-  [ Mul 2 4
-  , Mul 5 5
-  , Mul 11 8
-  , Mul 8 5
+  [ [M, M, M, S, X, X, M, A, S, M]
+  , [M, S, A, M, X, M, S, M, S, A]
+  , [A, M, X, S, X, M, A, A, M, M]
+  , [M, S, A, M, A, S, M, S, M, X]
+  , [X, M, A, S, A, M, X, A, M, M]
+  , [X, X, A, M, M, X, X, A, M, A]
+  , [S, M, S, M, S, A, S, X, S, S]
+  , [S, A, X, A, M, A, S, A, A, A]
+  , [M, A, M, M, M, X, M, M, M, M]
+  , [M, X, M, X, A, X, M, A, S, X]
   ]
 
-secondExample :: [Instruction]
-secondExample =
-  [ Mul 2 4
-  , Don't
-  , Mul 5 5
-  , Mul 11 8
-  , Do
-  , Mul 8 5
-  ]
+part2 :: [[Letter]] -> Int
+part2 = sum . map (length . filter id) . buildTable2
+
+buildTable2 :: [[Letter]] -> [[Bool]]
+buildTable2 ls = zipWith3 buildRow2 (repeat X : ls) ls (drop 1 ls ++ [repeat X])
+
+buildRow2 :: [Letter] -> [Letter] -> [Letter] -> [Bool]
+buildRow2 above row below =
+  zipWith5 buildCell2 (X : above) (drop 1 above ++ [X]) row (X : below) (drop 1 below ++ [X])
+
+buildCell2 :: Letter -> Letter -> Letter -> Letter -> Letter -> Bool
+buildCell2 nw ne cell sw se =
+  cell == A && isLeg nw se && isLeg sw ne
+
+isLeg :: Letter -> Letter -> Bool
+isLeg = \cases
+  S M -> True
+  M S -> True
+  _ _ -> False
 
 -- $> runTests
+
 runTests :: IO ()
 runTests = hspec do
   it "parses the first example" do
-    let raw = [text|
-          xmul(2,4)%&mul[3,7]!@^do_not_mul(5,5)+mul(32,64]then(mul(11,8)mul(8,5))
-        |] <> "\n"
+    let raw =
+          [text|
+          MMMSXXMASM
+          MSAMXMSMSA
+          AMXSXMAAMM
+          MSAMASMSMX
+          XMASAMXAMM
+          XXAMMXXAMA
+          SMSMSASXSS
+          SAXAMASAAA
+          MAMMMXMMMM
+          MXMXAXMASX
+        |]
+            <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
-  it "parses the second example" do
-    let raw = [text|
-          xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))
-        |] <> "\n"
-
-    parse parse1 "second example" raw `shouldBe` Right secondExample
-
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 161
+    part1 firstExample `shouldBe` 18
 
-  it "solves part two with the second example" do
-    part1 secondExample `shouldBe` 48
+  it "finds one match in XMAS" do
+    part1 [[X, M, A, S]] `shouldBe` 1
+
+  it "finds one match in XXMAS" do
+    -- part1 [[X, X, M, A, S]] `shouldBe` 1
+    let actual = fmap westToEast <$> buildRow [X, X, M, A, S] (repeat blank)
+    actual `shouldBe` ([0, 0, 0, 0, 1], [M, M, A, S, X])
+
+  it "solves part two with the first example" do
+    part2 firstExample `shouldBe` 9
 
 solveDay :: Show b => Parser a -> (a -> b) -> Day -> IO ()
 solveDay parser solver day = do
