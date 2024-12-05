@@ -7,15 +7,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE ViewPatterns #-}
 {-# OPTIONS_GHC -Wall -Wextra -Werror -Wno-name-shadowing #-}
 
 module Main where
 
-import Control.Monad (guard, unless)
+import Control.Monad (unless)
 import Data.ByteString qualified as BS
 import Data.ByteString.Lazy qualified as LBS
-import Data.Function (fix)
-import Data.List (zipWith5)
+import Data.List qualified as List
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.List.NonEmpty qualified as NonEmpty
+import Data.Ord (comparing)
+import Data.Set qualified as Set
 import Data.Time (Day, defaultTimeLocale, formatTime, fromGregorian)
 import NeatInterpolation (text)
 import Network.HTTP.Client
@@ -32,135 +36,90 @@ import Prelude
 
 main :: IO ()
 main = do
-  solveDay parse1 part2 $ fromGregorian 2024 12 04
+  solveDay parse1 part2 $ fromGregorian 2024 12 05
 
-data Letter
-  = X
-  | M
-  | A
-  | S
-  deriving (Show, Eq)
+type Page = Int
 
-parse1 :: Parser [[Letter]]
-parse1 = many letter `endBy1` newline
-  where
-    letter = choice [x, m, a, s]
-    x = X <$ char 'X'
-    m = M <$ char 'M'
-    a = A <$ char 'A'
-    s = S <$ char 'S'
-
-data SearchState = Next
-  { westToEast :: Letter
-  , eastToWest :: Letter
-  , northwestToSoutheast :: Letter
-  , southeastToNorthwest :: Letter
-  , northToSouth :: Letter
-  , southToNorth :: Letter
-  , northeastToSouthwest :: Letter
-  , southwestToNortheast :: Letter
+data Puzzle = Puzzle
+  { pageOrderingRules :: [(Page, Page)]
+  , updates :: [NonEmpty Page]
   }
   deriving (Show, Eq)
 
-blank :: SearchState
-blank =
-  Next
-    { westToEast = X
-    , eastToWest = S
-    , northwestToSoutheast = X
-    , southeastToNorthwest = S
-    , northToSouth = X
-    , southToNorth = S
-    , northeastToSouthwest = X
-    , southwestToNortheast = S
-    }
+parse1 :: Parser Puzzle
+parse1 = Puzzle <$> many rule <* newline <*> many update <* eof
+  where
+    rule = (,) <$> page <* char '|' <*> page <* newline
+    update = (:|) <$> page <*> many (char ',' *> page) <* newline
+    page = read <$> many1 digit
 
-part1 :: [[Letter]] -> Int
-part1 = sum . map sum . fst . buildTable
+part1 :: Puzzle -> Int
+part1 = sum . map middle . (filter <$> isInOrder . pageOrderingRules <*> updates)
 
-buildTable :: [[Letter]] -> ([[Int]], [[SearchState]])
-buildTable ls = fix \(~(_, table)) -> unzip do
-  zipWith buildRow ls (repeat blank : table)
+part2 :: Puzzle -> Int
+part2 Puzzle {pageOrderingRules, updates} =
+  sum
+    . map (middle . putInOrder pageOrderingRules)
+    $ filter (not . isInOrder pageOrderingRules) updates
 
-buildRow :: [Letter] -> [SearchState] -> ([Int], [SearchState])
-buildRow cs above = fix \(~(_, row)) -> unzip do
-  zipWith5 buildCell cs (blank : row) (blank : above) above (drop 1 above ++ [blank])
+middle :: NonEmpty Page -> Page
+middle (p :| ps) = (p : ps) !! i
+  where
+    n = 1 + length ps
+    i = n `div` 2
 
-buildCell :: Letter -> SearchState -> SearchState -> SearchState -> SearchState -> (Int, SearchState)
-buildCell c Next {westToEast, eastToWest} Next {northwestToSoutheast, southeastToNorthwest} Next {northToSouth, southToNorth} Next {northeastToSouthwest, southwestToNortheast} =
-  ( length do
-      (expected, final) <-
-        [ (westToEast, S)
-          , (eastToWest, X)
-          , (northwestToSoutheast, S)
-          , (southeastToNorthwest, X)
-          , (northToSouth, S)
-          , (southToNorth, X)
-          , (northeastToSouthwest, S)
-          , (southwestToNortheast, X)
-          ]
-      guard $ c == expected && c == final
-  , Next
-      { westToEast = nextMatch westToEast c
-      , eastToWest = prevMatch eastToWest c
-      , northwestToSoutheast = nextMatch northwestToSoutheast c
-      , southeastToNorthwest = prevMatch southeastToNorthwest c
-      , northToSouth = nextMatch northToSouth c
-      , southToNorth = prevMatch southToNorth c
-      , northeastToSouthwest = nextMatch northeastToSouthwest c
-      , southwestToNortheast = prevMatch southwestToNortheast c
-      }
-  )
+putInOrder :: [(Page, Page)] -> NonEmpty Page -> NonEmpty Page
+putInOrder (Set.fromList -> lt) = NonEmpty.unfoldr next . graph
+  where
+    graph ps = lesserSort $ fmap (assocLesser (NonEmpty.toList ps)) ps
 
-nextMatch :: Letter -> Letter -> Letter
-nextMatch expected = \case
-  X -> M
-  c | c /= expected -> X
-  M -> A
-  A -> S
-  S -> X
+    lesserSort = NonEmpty.sortBy (comparing (Set.size . snd))
+    assocLesser ps p = (p, Set.fromList [p' | p' <- ps, (p', p) `Set.member` lt])
 
-prevMatch :: Letter -> Letter -> Letter
-prevMatch expected = \case
-  S -> A
-  c | c /= expected -> S
-  A -> M
-  M -> X
-  X -> S
+    next ((p, _) :| as) =
+      (p, lesserSort . fmap (fmap (Set.delete p)) <$> NonEmpty.nonEmpty as)
 
-firstExample :: [[Letter]]
+isInOrder :: [(Page, Page)] -> NonEmpty Page -> Bool
+isInOrder (Set.fromList -> lt) (p :| ps) = not $ any (`Set.member` lt) do
+  p0 : pt <- List.tails (p : ps)
+  p1 <- pt
+  pure (p1, p0)
+
+firstExample :: Puzzle
 firstExample =
-  [ [M, M, M, S, X, X, M, A, S, M]
-  , [M, S, A, M, X, M, S, M, S, A]
-  , [A, M, X, S, X, M, A, A, M, M]
-  , [M, S, A, M, A, S, M, S, M, X]
-  , [X, M, A, S, A, M, X, A, M, M]
-  , [X, X, A, M, M, X, X, A, M, A]
-  , [S, M, S, M, S, A, S, X, S, S]
-  , [S, A, X, A, M, A, S, A, A, A]
-  , [M, A, M, M, M, X, M, M, M, M]
-  , [M, X, M, X, A, X, M, A, S, X]
-  ]
-
-part2 :: [[Letter]] -> Int
-part2 = sum . map (length . filter id) . buildTable2
-
-buildTable2 :: [[Letter]] -> [[Bool]]
-buildTable2 ls = zipWith3 buildRow2 (repeat X : ls) ls (drop 1 ls ++ [repeat X])
-
-buildRow2 :: [Letter] -> [Letter] -> [Letter] -> [Bool]
-buildRow2 above row below =
-  zipWith5 buildCell2 (X : above) (drop 1 above ++ [X]) row (X : below) (drop 1 below ++ [X])
-
-buildCell2 :: Letter -> Letter -> Letter -> Letter -> Letter -> Bool
-buildCell2 nw ne cell sw se =
-  cell == A && isLeg nw se && isLeg sw ne
-
-isLeg :: Letter -> Letter -> Bool
-isLeg = \cases
-  S M -> True
-  M S -> True
-  _ _ -> False
+  Puzzle
+    { pageOrderingRules =
+        [ (47, 53)
+        , (97, 13)
+        , (97, 61)
+        , (97, 47)
+        , (75, 29)
+        , (61, 13)
+        , (75, 53)
+        , (29, 13)
+        , (97, 29)
+        , (53, 29)
+        , (61, 53)
+        , (97, 53)
+        , (61, 29)
+        , (47, 13)
+        , (75, 47)
+        , (97, 75)
+        , (47, 61)
+        , (75, 61)
+        , (47, 29)
+        , (75, 13)
+        , (53, 13)
+        ]
+    , updates =
+        [ 75 :| [47, 61, 53, 29]
+        , 97 :| [61, 53, 29, 13]
+        , 75 :| [29, 13]
+        , 75 :| [97, 47, 61, 53]
+        , 61 :| [13, 29]
+        , 97 :| [13, 75, 29, 47]
+        ]
+    }
 
 -- $> runTests
 
@@ -169,34 +128,44 @@ runTests = hspec do
   it "parses the first example" do
     let raw =
           [text|
-          MMMSXXMASM
-          MSAMXMSMSA
-          AMXSXMAAMM
-          MSAMASMSMX
-          XMASAMXAMM
-          XXAMMXXAMA
-          SMSMSASXSS
-          SAXAMASAAA
-          MAMMMXMMMM
-          MXMXAXMASX
-        |]
+            47|53
+            97|13
+            97|61
+            97|47
+            75|29
+            61|13
+            75|53
+            29|13
+            97|29
+            53|29
+            61|53
+            97|53
+            61|29
+            47|13
+            75|47
+            97|75
+            47|61
+            75|61
+            47|29
+            75|13
+            53|13
+
+            75,47,61,53,29
+            97,61,53,29,13
+            75,29,13
+            75,97,47,61,53
+            61,13,29
+            97,13,75,29,47
+          |]
             <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 18
-
-  it "finds one match in XMAS" do
-    part1 [[X, M, A, S]] `shouldBe` 1
-
-  it "finds one match in XXMAS" do
-    -- part1 [[X, X, M, A, S]] `shouldBe` 1
-    let actual = fmap westToEast <$> buildRow [X, X, M, A, S] (repeat blank)
-    actual `shouldBe` ([0, 0, 0, 0, 1], [M, M, A, S, X])
+    part1 firstExample `shouldBe` 143
 
   it "solves part two with the first example" do
-    part2 firstExample `shouldBe` 9
+    part2 firstExample `shouldBe` 123
 
 solveDay :: Show b => Parser a -> (a -> b) -> Day -> IO ()
 solveDay parser solver day = do
