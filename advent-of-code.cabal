@@ -1,0 +1,31 @@
+cabal-version: 1.12
+
+name:           advent-of-code
+version:        1.0.0
+synopsis:       Advent of Code solver
+build-type:     Simple
+
+executable advent-of-code
+  main-is: Main.hs
+  other-modules:
+      SolveDay
+  hs-source-dirs:
+      app
+  build-depends:
+      base ==4.20.*
+    , bytestring
+    , comonad
+    , containers
+    , directory
+    , hspec
+    , http-client
+    , http-client-tls
+    , http-types
+    , mtl
+    , neat-interpolation
+    , parsec
+    , text
+    , time
+    , transformers
+    , vector
+  default-language: Haskell2010
