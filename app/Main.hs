@@ -44,7 +44,10 @@ part2 :: Puzzle -> Int
 part2 = solve [(+), (*), concatenation]
 
 concatenation :: Int -> Int -> Int
-concatenation n m = read (show n <> show m)
+concatenation n m = (n * (10^numDigits m)) + m where
+
+numDigits :: Int -> Int
+numDigits = ceiling @Double . logBase 10 . toEnum . succ
 
 solve :: [Op] -> Puzzle -> Int
 solve ops = sum . map fst . filter (uncurry (solvable ops))
