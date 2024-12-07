@@ -13,13 +13,8 @@
 module Main where
 
 import SolveDay (solveDay)
-import Control.Monad (guard)
 import Data.Time (fromGregorian)
-import Data.Map (Map)
-import Data.Map qualified as Map
-import Data.Set qualified as Set
-import Data.Maybe (fromJust, listToMaybe)
-import Data.List qualified as List
+import Data.List.NonEmpty (NonEmpty(..))
 import NeatInterpolation (text)
 import Test.Hspec (hspec, it, shouldBe)
 import Text.Parsec
@@ -30,104 +25,53 @@ import Prelude
 
 main :: IO ()
 main = do
-  solveDay parse1 part2 $ fromGregorian 2024 12 06
+  solveDay parse1 part2 $ fromGregorian 2024 12 07
 
-type Puzzle = [[Cell]]
-
-data Cell = Feature Tile | Guard Direction
-  deriving (Show, Eq)
-
-data Tile = Blank | Obstacle
-  deriving (Show, Eq)
-
-data Direction = North | East | South | West
-  deriving (Show, Eq, Ord)
+type Puzzle = [(Int, NonEmpty Int)]
+type Op = Int -> Int -> Int
 
 parse1 :: Parser Puzzle
-parse1 = row `endBy1` newline
-  where
-    row = many cell
-    cell = feature <|> guard
-    feature = Feature <$> tile
-    tile = blank <|> obstacle
-    blank = Blank <$ char '.'
-    obstacle = Obstacle <$ char '#'
-    guard = Guard <$> direction
-    direction = north <|> east <|> south <|> west
-    north = North <$ char '^'
-    east = East <$ char '>'
-    south = South <$ char 'v'
-    west = West <$ char '<'
+parse1 = equation `endBy1` newline where
+  equation = (,) <$> int <* char ':' <*> nums
+  int = read <$> many digit
+  nums = (:|) <$> num <*> many num
+  num = char ' ' *> int
 
 part1 :: Puzzle -> Int
-part1 = Set.size . Set.fromList . map fst . route
+part1 = solve [(+), (*)]
 
 part2 :: Puzzle -> Int
-part2 p = length do
-  let cs = cells p
-      g = grid cs
-      s = start cs
-  p <- Set.toList . Set.fromList . map fst . drop 1 $ path g s
-  guard $ containsDup $ path (Map.insert p Obstacle g) s
+part2 = solve [(+), (*), concatenation]
 
-containsDup :: Ord a => [a] -> Bool
-containsDup = loop Set.empty where
-  loop _ [] = False
-  loop seen (x:xs)
-    | Set.member x seen = True
-    | otherwise = loop (Set.insert x seen) xs
+concatenation :: Int -> Int -> Int
+concatenation n m = read (show n <> show m)
 
+solve :: [Op] -> Puzzle -> Int
+solve ops = sum . map fst . filter (uncurry (solvable ops))
 
-route :: Puzzle -> [((Int, Int), Direction)]
-route = (path <$> grid <*> start) . cells
+solvable :: [Op] -> Int -> NonEmpty Int -> Bool
+solvable ops testValue (num :| nums) = any (== testValue) do
+  totals ops nums [num]
 
-type Cells = [(Int, Int, Cell)]
-
-cells :: Puzzle -> Cells
-cells = concat . zipWith labelRow [0..] where
-  labelRow y = zipWith (labelCell y) [0..]
-  labelCell y x c = (x,y,c)
-
-start :: Cells -> ((Int, Int), Direction)
-start cells = fromJust $ listToMaybe do
-  (x,y,Guard d) <- cells
-  pure ((x,y),d)
-
-grid :: Cells -> Map (Int, Int) Tile
-grid cells = Map.fromList do
-  (x,y,c) <- cells
-  pure ((x,y),case c of Feature t -> t ; _ -> Blank)
-
-path :: Map (Int, Int) Tile -> ((Int, Int), Direction) -> [((Int, Int), Direction)]
-path g = \t -> t : List.unfoldr (uncurry walk) t where
-  walk p d = do
-    let test = step p d
-    Map.lookup test g >>= \case
-      Blank -> pure ((test, d), (test, d))
-      Obstacle -> walk p (turn d)
-  step (x,y) = \case
-    North -> (x, y - 1)
-    East  -> (x + 1, y)
-    South -> (x, y + 1)
-    West  -> (x - 1, y)
-  turn = \case
-    North -> East
-    East -> South
-    South -> West
-    West -> North
+totals :: [Op] -> [Int] -> [Int] -> [Int]
+totals ops = \case
+  [] -> id
+  m : ms -> \ns -> totals ops ms do
+    op <- ops
+    n <- ns
+    pure (n `op` m)
 
 firstExample :: Puzzle
 firstExample =
-  [ [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Obstacle, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Obstacle]
-  , [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Blank, Feature Obstacle, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Obstacle, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Obstacle, Feature Blank, Feature Blank, Guard North, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Obstacle, Feature Blank]
-  , [Feature Obstacle, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank]
-  , [Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Blank, Feature Obstacle, Feature Blank, Feature Blank, Feature Blank]
+  [ (190, 10 :| [19])
+  , (3267, 81 :| [40, 27])
+  , (83, 17 :| [5])
+  , (156, 15 :| [6])
+  , (7290, 6 :| [8, 6, 15])
+  , (161011, 16 :| [10, 13])
+  , (192, 17 :| [8, 14])
+  , (21037, 9 :| [7, 18, 13])
+  , (292, 11 :| [6, 16, 20])
   ]
 
 -- $> runTests
@@ -137,23 +81,22 @@ runTests = hspec do
   it "parses the first example" do
     let raw =
           [text|
-            ....#.....
-            .........#
-            ..........
-            ..#.......
-            .......#..
-            ..........
-            .#..^.....
-            ........#.
-            #.........
-            ......#...
+            190: 10 19
+            3267: 81 40 27
+            83: 17 5
+            156: 15 6
+            7290: 6 8 6 15
+            161011: 16 10 13
+            192: 17 8 14
+            21037: 9 7 18 13
+            292: 11 6 16 20
           |]
             <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 41
+    part1 firstExample `shouldBe` 3749
 
   it "solves part two with the first example" do
-    part2 firstExample `shouldBe` 6
+    part2 firstExample `shouldBe` 11387
