@@ -13,8 +13,11 @@
 module Main where
 
 import SolveDay (solveDay)
+import Data.Map (Map)
+import Data.Map qualified as Map
+import Data.Set qualified as Set
 import Data.Time (fromGregorian)
-import Data.List.NonEmpty (NonEmpty(..))
+import Data.List qualified as List
 import NeatInterpolation (text)
 import Test.Hspec (hspec, it, shouldBe)
 import Text.Parsec
@@ -25,56 +28,89 @@ import Prelude
 
 main :: IO ()
 main = do
-  solveDay parse1 part2 $ fromGregorian 2024 12 07
+  solveDay parse1 part2 $ fromGregorian 2024 12 08
 
-type Puzzle = [(Int, NonEmpty Int)]
-type Op = Int -> Int -> Int
+type Puzzle = [[Tile]]
+
+data Tile = Blank | Antenna Char
+  deriving (Show, Eq)
 
 parse1 :: Parser Puzzle
-parse1 = equation `endBy1` newline where
-  equation = (,) <$> int <* char ':' <*> nums
-  int = read <$> many digit
-  nums = (:|) <$> num <*> many num
-  num = char ' ' *> int
+parse1 = (row `endBy1` newline) <* eof where
+  row = many tile
+  tile = blank <|> antenna
+  blank = Blank <$ char '.'
+  antenna = Antenna <$> oneOf (['a'..'z'] <> ['A' .. 'Z'] <> ['0' .. '9'])
 
 part1 :: Puzzle -> Int
-part1 = solve [(+), (*)]
+part1 puzzle =
+  Set.size .
+  Set.fromList .
+  filter (inBounds puzzle) .
+  concat .
+  Map.elems .
+  fmap antinodes $
+  groupByFrequency puzzle
 
 part2 :: Puzzle -> Int
-part2 = solve [(+), (*), concatenation]
+part2 puzzle =
+  Set.size .
+  Set.fromList .
+  concat .
+  Map.elems .
+  fmap (harmonicAntinodes puzzle) $
+  groupByFrequency puzzle
 
-concatenation :: Int -> Int -> Int
-concatenation n m = (n * (10^numDigits m)) + m where
+groupByFrequency :: Puzzle -> Map Char [(Int, Int)]
+groupByFrequency rows = Map.fromListWith (<>) do
+  (y, columns) <- zip [0..] rows
+  (x, Antenna f) <- zip [0..] columns
+  pure (f, [(x,y)])
 
-numDigits :: Int -> Int
-numDigits = ceiling @Double . logBase 10 . toEnum . succ
+antinodes :: [(Int,Int)] -> [(Int, Int)]
+antinodes ps = do
+  p : qs <- List.tails ps
+  q <- qs
+  ((x0,y0),(x1,y1)) <- [(p,q), (q,p)]
+  pure (2*x0 - x1, 2*y0 - y1)
 
-solve :: [Op] -> Puzzle -> Int
-solve ops = sum . map fst . filter (uncurry (solvable ops))
+harmonicAntinodes :: Puzzle -> [(Int,Int)] -> [(Int, Int)]
+harmonicAntinodes puzzle =
+  let check = inBounds puzzle
+  in
+  \ps -> do
+    (x0, y0) : qs <- List.tails (List.sort ps)
+    (x1, y1) <- qs
+    let dx = x1 - x0
+        dy = y1 - y0
+        m = gcd dx dy
+        ix = dx `div` m
+        iy = dy `div` m
 
-solvable :: [Op] -> Int -> NonEmpty Int -> Bool
-solvable ops testValue (num :| nums) = any (== testValue) do
-  totals ops nums [num]
+    concat
+      [ takeWhile check [(x0 - n * ix,y0 - n * iy) | n <- [0..]]
+      , takeWhile check [(x0 + n * ix,y0 + n * iy) | n <- [1..]]
+      ]
 
-totals :: [Op] -> [Int] -> [Int] -> [Int]
-totals ops = \case
-  [] -> id
-  m : ms -> \ns -> totals ops ms do
-    op <- ops
-    n <- ns
-    pure (n `op` m)
+inBounds :: Puzzle -> (Int,Int) -> Bool
+inBounds puzzle = \(x,y) -> 0 <= x && x < width && 0 <= y && y < height where
+  height = length puzzle
+  width = case puzzle of [] -> 0 ; row : _ -> length row
 
 firstExample :: Puzzle
 firstExample =
-  [ (190, 10 :| [19])
-  , (3267, 81 :| [40, 27])
-  , (83, 17 :| [5])
-  , (156, 15 :| [6])
-  , (7290, 6 :| [8, 6, 15])
-  , (161011, 16 :| [10, 13])
-  , (192, 17 :| [8, 14])
-  , (21037, 9 :| [7, 18, 13])
-  , (292, 11 :| [6, 16, 20])
+  [ [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Antenna '0', Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Antenna '0', Blank, Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Antenna '0', Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Antenna '0', Blank, Blank, Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Antenna 'A', Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Antenna 'A', Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Antenna 'A', Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank ]
+  , [ Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank, Blank ]
   ]
 
 -- $> runTests
@@ -84,22 +120,25 @@ runTests = hspec do
   it "parses the first example" do
     let raw =
           [text|
-            190: 10 19
-            3267: 81 40 27
-            83: 17 5
-            156: 15 6
-            7290: 6 8 6 15
-            161011: 16 10 13
-            192: 17 8 14
-            21037: 9 7 18 13
-            292: 11 6 16 20
+            ............
+            ........0...
+            .....0......
+            .......0....
+            ....0.......
+            ......A.....
+            ............
+            ............
+            ........A...
+            .........A..
+            ............
+            ............
           |]
             <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 3749
+    part1 firstExample `shouldBe` 14
 
   it "solves part two with the first example" do
-    part2 firstExample `shouldBe` 11387
+    part2 firstExample `shouldBe` 34
