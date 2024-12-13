@@ -73,40 +73,20 @@ part2 = part1 . map \Machine{buttonA,buttonB,prize=Point{x,y}} ->
   Machine{buttonA,buttonB,prize=Point (x+offset) (y+offset)}
   where offset = 10_000_000_000_000
 
-euclid :: Int -> Int -> (Int, Int, Int)
-euclid = \a b -> if a < b then loop 1 0 0 1 a b else loop 0 1 1 0 b a where
-  loop _ _ !ja !jb 0 d = (d, ja, jb)
-  loop !ia !ib !ja !jb c d =
-    let (q, r) = d `quotRem` c in
-    loop (ja - q*ia) (jb - q*ib) ia ib r c
-
-combos :: Int -> Int -> Int -> Maybe ((Int, Int), (Int,Int))
-combos a b p = do
-  let (g, ca, _cb) = euclid a b
-      b' = b `quot` g
-      l = lcm a b
-      sa = l `quot` a
-      sb = l `quot` b
-
-  (p', 0) <- pure $ p `quotRem` g
-
-  let na = ((ca + b') * p') `rem` b'
-      nb = (p - a*na) `quot` b
-
-  pure ((na,nb),(sa,-sb))
-
 cost :: Machine -> Maybe Int
 cost Machine {buttonA, buttonB, prize} = do
-  ((nax,nbx), (sax,sbx)) <- combos buttonA.x buttonB.x prize.x
-  ((nay,nby), (say,sby)) <- combos buttonA.y buttonB.y prize.y
+  -- prize.x = a * buttonA.x + b * buttonB.x
+  -- prize.y = a * buttonA.y + b * buttonB.y
 
-  (tb, 0) <- pure $ ((nay-nax)*sbx*sby + nbx*sax*sby - nby*say*sbx) `quotRem` (sax*sby - say*sbx)
-
-  (q, 0) <- pure $ (tb - nbx) `quotRem` sbx
-  let ta = q * sax + nax
-
-  pure $ ta * 3 + tb
-
+  -- a = (prize.x - b * buttonB.x) / buttonA.x
+  -- a = (prize.y - b * buttonB.y) / buttonA.y
+  --
+  -- (b * buttonB.y - prize.y) / buttonA.y = (b * buttonB.x - prize.x) / buttonA.x
+  -- b * buttonB.y * buttonA.x - prize.y * buttonA.x = b * buttonB.x * buttonA.y - prize.x * buttonA.y
+  -- b = (prize.y * buttonA.x - prize.x * buttonA.y) / (buttonB.y * buttonA.x - buttonB.x * buttonA.y)
+  (b, 0) <- pure $ (prize.y * buttonA.x - prize.x * buttonA.y) `quotRem` (buttonB.y * buttonA.x - buttonB.x * buttonA.y)
+  (a, 0) <- pure $ (prize.x - b * buttonB.x) `quotRem` buttonA.x
+  pure $ 3*a + b
 
 firstExample :: Puzzle
 firstExample =
