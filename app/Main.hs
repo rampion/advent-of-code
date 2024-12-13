@@ -6,28 +6,31 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE LexicalNegation #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 {-# OPTIONS_GHC -Wall -Wextra -Werror -Wno-name-shadowing #-}
 
 module Main where
 
-import Control.Monad (filterM)
-import Control.Monad.Trans.State.Strict (State)
-import Control.Monad.Trans.State.Strict qualified as State
-import Data.Foldable (traverse_)
+-- import Data.Ratio ((%))
+-- import Control.Monad qualified as Monad
+-- import Control.Monad.Trans.State.Strict (State)
+-- import Control.Monad.Trans.State.Strict qualified as State
+-- import Data.Foldable (traverse_)
 -- import Data.Function ((&))
 -- import Data.Functor ((<&>))
 -- import Data.List qualified as List
 -- import Data.List.NonEmpty (NonEmpty(..))
 -- import Data.List.NonEmpty qualified as NonEmpty
-import Data.Map (Map)
-import Data.Map qualified as Map
+-- import Data.Map (Map)
+-- import Data.Map qualified as Map
 import Data.Maybe qualified as Maybe
-import Data.Set (Set)
-import Data.Set qualified as Set
+-- import Data.Set (Set)
+-- import Data.Set qualified as Set
 import Data.Time (fromGregorian)
 import NeatInterpolation (text)
 import SolveDay (solveDay)
@@ -40,128 +43,77 @@ import Prelude
 
 main :: IO ()
 main = do
-  solveDay parse1 part2 $ fromGregorian 2024 12 12
+  solveDay parse1 part2 $ fromGregorian 2024 12 13
 
-type Puzzle = [[Char]]
+type Puzzle = [Machine]
+
+data Machine = Machine
+  { buttonA :: Point
+  , buttonB :: Point
+  , prize :: Point
+  }
+  deriving (Show, Eq)
+
+data Point = Point {x :: Int, y :: Int}
+  deriving (Show, Eq)
 
 parse1 :: Parser Puzzle
-parse1 = (many letter `endBy1` newline) <* eof
+parse1 = (machine `sepBy` newline) <* eof
+  where
+    machine = Machine <$> button 'A' <*> button 'B' <*> prize
+    button c = Point <$ string "Button " <* char c <* string ": X+" <*> int <* string ", Y+" <*> int <* newline
+    prize = Point <$ string "Prize: X=" <*> int <* string ", Y=" <*> int <* newline
+    int = read <$> many1 digit
 
 part1 :: Puzzle -> Int
-part1 = sum . map price . (regions =<< perimeter) . grid @Int @Int
+part1 = sum . Maybe.mapMaybe cost
 
 part2 :: Puzzle -> Int
-part2 = sum . map price . (regions =<< sides) . grid @Int @Int
+part2 = part1 . map \Machine{buttonA,buttonB,prize=Point{x,y}} ->
+  Machine{buttonA,buttonB,prize=Point (x+offset) (y+offset)}
+  where offset = 10_000_000_000_000
 
-grid :: (Integral x, Integral y) => Puzzle -> Grid x y
-grid rows = Map.fromList [((x, y), c) | (y, row) <- zip [0 ..] rows, (x, c) <- zip [0 ..] row]
+euclid :: Int -> Int -> (Int, Int, Int)
+euclid = \a b -> if a < b then loop 1 0 0 1 a b else loop 0 1 1 0 b a where
+  loop _ _ !ja !jb 0 d = (d, ja, jb)
+  loop !ia !ib !ja !jb c d =
+    let (q, r) = d `quotRem` c in
+    loop (ja - q*ia) (jb - q*ib) ia ib r c
 
-price :: Region x y -> Int
-price = liftA2 (*) Map.size sum
+combos :: Int -> Int -> Int -> Maybe ((Int, Int), (Int,Int))
+combos a b p = do
+  let (g, ca, _cb) = euclid a b
+      b' = b `quot` g
+      l = lcm a b
+      sa = l `quot` a
+      sb = l `quot` b
 
-perimeter :: (Integral x, Integral y) => Grid x y -> Count x y
-perimeter g p c = length [() | q <- neighbors p, Map.lookup q g /= Just c]
+  (p', 0) <- pure $ p `quotRem` g
 
-sides :: (Integral x, Integral y) => Grid x y -> Count x y
-sides g (x, y) c = length $ filter id [t, l, r, b]
-  where
-    isDiff q = Map.lookup q g /= Just c
-    n = isDiff (x, y - 1)
-    nw = isDiff (x - 1, y - 1)
-    w = isDiff (x - 1, y)
-    sw = isDiff (x - 1, y + 1)
-    s = isDiff (x, y + 1)
-    se = isDiff (x + 1, y + 1)
-    e = isDiff (x + 1, y)
-    ne = isDiff (x + 1, y - 1)
+  let na = ((ca + b') * p') `rem` b'
+      nb = (p - a*na) `quot` b
 
-    t = n && (w || not nw)
-    l = w && (s || not sw)
-    b = s && (e || not se)
-    r = e && (n || not ne)
+  pure ((na,nb),(sa,-sb))
 
-neighbors :: (Integral x, Integral y) => (x, y) -> [(x, y)]
-neighbors (x, y) = [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+cost :: Machine -> Maybe Int
+cost Machine {buttonA, buttonB, prize} = do
+  ((nax,nbx), (sax,sbx)) <- combos buttonA.x buttonB.x prize.x
+  ((nay,nby), (say,sby)) <- combos buttonA.y buttonB.y prize.y
 
-type Grid x y = Map (x, y) Char
+  (tb, 0) <- pure $ ((nay-nax)*sbx*sby + nbx*sax*sby - nby*say*sbx) `quotRem` (sax*sby - say*sbx)
 
-type Region x y = Map (x, y) Int
+  (q, 0) <- pure $ (tb - nbx) `quotRem` sbx
+  let ta = q * sax + nax
 
-type Count x y = (x, y) -> Char -> Int
+  pure $ ta * 3 + tb
 
-regions :: (Integral x, Integral y) => Count x y -> Grid x y -> [Region x y]
-regions count = Maybe.catMaybes . (`State.evalState` Set.empty) . liftA2 traverse (dfs count) Map.toList
-
-dfs :: (Integral x, Integral y) => Count x y -> Grid x y -> ((x, y), Char) -> State (Set (x, y)) (Maybe (Region x y))
-dfs count g (p, c) =
-  State.gets (Set.member p) >>= \case
-    True -> pure Nothing
-    False -> do
-      State.modify (Set.insert p)
-      Just <$> search count g c Map.empty [p]
-
-search :: (Integral x, Integral y) => Count x y -> Grid x y -> Char -> Region x y -> [(x, y)] -> State (Set (x, y)) (Region x y)
-search count g c r = \case
-  [] -> pure r
-  p : rest -> do
-    unseen <- filterM
-      do
-        \q ->
-          if Map.lookup q g == Just c
-            then State.gets (not . Set.member q)
-            else pure False
-      do neighbors p
-    traverse_ (State.modify . Set.insert) unseen
-    search count g c (Map.insert p (count p c) r) (unseen ++ rest)
 
 firstExample :: Puzzle
 firstExample =
-  [ ['A', 'A', 'A', 'A']
-  , ['B', 'B', 'C', 'D']
-  , ['B', 'B', 'C', 'C']
-  , ['E', 'E', 'E', 'C']
-  ]
-
-secondExample :: Puzzle
-secondExample =
-  [ ['O', 'O', 'O', 'O', 'O']
-  , ['O', 'X', 'O', 'X', 'O']
-  , ['O', 'O', 'O', 'O', 'O']
-  , ['O', 'X', 'O', 'X', 'O']
-  , ['O', 'O', 'O', 'O', 'O']
-  ]
-
-thirdExample :: Puzzle
-thirdExample =
-  [ ['R', 'R', 'R', 'R', 'I', 'I', 'C', 'C', 'F', 'F']
-  , ['R', 'R', 'R', 'R', 'I', 'I', 'C', 'C', 'C', 'F']
-  , ['V', 'V', 'R', 'R', 'R', 'C', 'C', 'F', 'F', 'F']
-  , ['V', 'V', 'R', 'C', 'C', 'C', 'J', 'F', 'F', 'F']
-  , ['V', 'V', 'V', 'V', 'C', 'J', 'J', 'C', 'F', 'E']
-  , ['V', 'V', 'I', 'V', 'C', 'C', 'J', 'J', 'E', 'E']
-  , ['V', 'V', 'I', 'I', 'I', 'C', 'J', 'J', 'E', 'E']
-  , ['M', 'I', 'I', 'I', 'I', 'I', 'J', 'J', 'E', 'E']
-  , ['M', 'I', 'I', 'I', 'S', 'I', 'J', 'E', 'E', 'E']
-  , ['M', 'M', 'M', 'I', 'S', 'S', 'J', 'E', 'E', 'E']
-  ]
-
-fourthExample :: Puzzle
-fourthExample =
-  [ ['E', 'E', 'E', 'E', 'E']
-  , ['E', 'X', 'X', 'X', 'X']
-  , ['E', 'E', 'E', 'E', 'E']
-  , ['E', 'X', 'X', 'X', 'X']
-  , ['E', 'E', 'E', 'E', 'E']
-  ]
-
-fifthExample :: Puzzle
-fifthExample =
-  [ ['A', 'A', 'A', 'A', 'A', 'A']
-  , ['A', 'A', 'A', 'B', 'B', 'A']
-  , ['A', 'A', 'A', 'B', 'B', 'A']
-  , ['A', 'B', 'B', 'A', 'A', 'A']
-  , ['A', 'B', 'B', 'A', 'A', 'A']
-  , ['A', 'A', 'A', 'A', 'A', 'A']
+  [ Machine {buttonA = Point 94 34, buttonB = Point 22 67, prize = Point 8_400 5_400}
+  , Machine {buttonA = Point 26 66, buttonB = Point 67 21, prize = Point 12_748 12_176}
+  , Machine {buttonA = Point 17 86, buttonB = Point 84 37, prize = Point 7_870 6_450}
+  , Machine {buttonA = Point 69 23, buttonB = Point 27 71, prize = Point 18_641 10_279}
   ]
 
 -- $> runTests
@@ -171,93 +123,28 @@ runTests = hspec do
   it "parses the first example" do
     let raw =
           [text|
-            AAAA
-            BBCD
-            BBCC
-            EEEC
+            Button A: X+94, Y+34
+            Button B: X+22, Y+67
+            Prize: X=8400, Y=5400
+
+            Button A: X+26, Y+66
+            Button B: X+67, Y+21
+            Prize: X=12748, Y=12176
+
+            Button A: X+17, Y+86
+            Button B: X+84, Y+37
+            Prize: X=7870, Y=6450
+
+            Button A: X+69, Y+23
+            Button B: X+27, Y+71
+            Prize: X=18641, Y=10279
           |]
             <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 140
+    part1 firstExample `shouldBe` 480
 
   it "solves part two with the first example" do
-    part2 firstExample `shouldBe` 80
-
-  it "parses the second example" do
-    let raw =
-          [text|
-            OOOOO
-            OXOXO
-            OOOOO
-            OXOXO
-            OOOOO
-          |]
-            <> "\n"
-
-    parse parse1 "second example" raw `shouldBe` Right secondExample
-
-  it "solves part one with the second example" do
-    part1 secondExample `shouldBe` 772
-
-  it "solves part two with the second example" do
-    part2 secondExample `shouldBe` 436
-
-  it "parses the third example" do
-    let raw =
-          [text|
-            RRRRIICCFF
-            RRRRIICCCF
-            VVRRRCCFFF
-            VVRCCCJFFF
-            VVVVCJJCFE
-            VVIVCCJJEE
-            VVIIICJJEE
-            MIIIIIJJEE
-            MIIISIJEEE
-            MMMISSJEEE
-          |]
-            <> "\n"
-
-    parse parse1 "third example" raw `shouldBe` Right thirdExample
-
-  it "solves part one with the third example" do
-    part1 thirdExample `shouldBe` 1930
-
-  it "solves part two with the third example" do
-    part2 thirdExample `shouldBe` 1206
-
-  it "parses the fourth example" do
-    let raw =
-          [text|
-            EEEEE
-            EXXXX
-            EEEEE
-            EXXXX
-            EEEEE
-          |]
-            <> "\n"
-
-    parse parse1 "fourth example" raw `shouldBe` Right fourthExample
-
-  it "solves part two with the fourth example" do
-    part2 fourthExample `shouldBe` 236
-
-  it "parses the fifth example" do
-    let raw =
-          [text|
-            AAAAAA
-            AAABBA
-            AAABBA
-            ABBAAA
-            ABBAAA
-            AAAAAA
-          |]
-            <> "\n"
-
-    parse parse1 "fifth example" raw `shouldBe` Right fifthExample
-
-  it "solves part two with the fifth example" do
-    part2 fifthExample `shouldBe` 368
+    part2 firstExample `shouldBe` 875318608908
