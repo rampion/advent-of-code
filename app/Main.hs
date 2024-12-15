@@ -16,24 +16,25 @@
 
 module Main where
 
+-- import Control.Concurrent (threadDelay)
 -- import Data.Ratio ((%))
 -- import Control.Monad qualified as Monad
 -- import Control.Monad.Trans.State.Strict (State)
 -- import Control.Monad.Trans.State.Strict qualified as State
--- import Data.Foldable (traverse_)
+import Data.Foldable qualified as Foldable
 -- import Data.Function ((&))
 -- import Data.Functor ((<&>))
--- import Data.List qualified as List
+import Data.List qualified as List
 -- import Data.List.NonEmpty (NonEmpty(..))
 -- import Data.List.NonEmpty qualified as NonEmpty
--- import Data.Map (Map)
--- import Data.Map qualified as Map
+import Data.Map (Map)
+import Data.Map qualified as Map
 import Data.Maybe qualified as Maybe
--- import Data.Set (Set)
--- import Data.Set qualified as Set
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Time (fromGregorian)
 import NeatInterpolation (text)
-import SolveDay (solveDay)
+import SolveDay (solveDayIO)
 import Test.Hspec (hspec, it, shouldBe)
 import Text.Parsec hiding (State)
 import Text.Parsec.Text (Parser)
@@ -43,57 +44,125 @@ import Prelude
 
 main :: IO ()
 main = do
-  solveDay parse1 part2 $ fromGregorian 2024 12 13
+-- $> animate firstExample
+  solveDayIO parse1 animate $ fromGregorian 2024 12 14
 
-type Puzzle = [Machine]
+type Puzzle = [Robot Int Int]
 
-data Machine = Machine
-  { buttonA :: Point
-  , buttonB :: Point
-  , prize :: Point
+data Robot w h = Robot
+  { position :: Point w h
+  , velocity :: Point w h
   }
   deriving (Show, Eq)
 
-data Point = Point {x :: Int, y :: Int}
-  deriving (Show, Eq)
+data Point w h = Point {x :: w, y :: h}
+  deriving (Show, Eq, Ord)
 
 parse1 :: Parser Puzzle
-parse1 = (machine `sepBy` newline) <* eof
+parse1 = (robot `endBy` newline) <* eof
   where
-    machine = Machine <$> button 'A' <*> button 'B' <*> prize
-    button c = Point <$ string "Button " <* char c <* string ": X+" <*> int <* string ", Y+" <*> int <* newline
-    prize = Point <$ string "Prize: X=" <*> int <* string ", Y=" <*> int <* newline
-    int = read <$> many1 digit
+    robot = Robot <$> position <* char ' ' <*> velocity
+    position = string "p=" *> coord
+    velocity = string "v=" *> coord
+    coord = Point <$> int <* char ',' <*> int
+    int = (*) <$> sign <*> digits
+    sign = option 1 (-1 <$ char '-')
+    digits = read <$> many1 digit
 
 part1 :: Puzzle -> Int
-part1 = sum . Maybe.mapMaybe cost
+part1 = safetyFactor @Int 100 101 103
 
-part2 :: Puzzle -> Int
-part2 = part1 . map \Machine{buttonA,buttonB,prize=Point{x,y}} ->
-  Machine{buttonA,buttonB,prize=Point (x+offset) (y+offset)}
-  where offset = 10_000_000_000_000
+animate :: Puzzle -> IO ()
+animate = Foldable.traverse_ (uncurry $ printFrame 101 103) . filter (dense (Point 50 51) . snd) . zip  [0..] . frames 101 103
 
-cost :: Machine -> Maybe Int
-cost Machine {buttonA, buttonB, prize} = do
-  -- prize.x = a * buttonA.x + b * buttonB.x
-  -- prize.y = a * buttonA.y + b * buttonB.y
+dense :: (Integral w, Integral h) => Point w h -> Set (Point w h) -> Bool
+dense p set = length (component set p) > 10
 
-  -- a = (prize.x - b * buttonB.x) / buttonA.x
-  -- a = (prize.y - b * buttonB.y) / buttonA.y
-  --
-  -- (b * buttonB.y - prize.y) / buttonA.y = (b * buttonB.x - prize.x) / buttonA.x
-  -- b * buttonB.y * buttonA.x - prize.y * buttonA.x = b * buttonB.x * buttonA.y - prize.x * buttonA.y
-  -- b = (prize.y * buttonA.x - prize.x * buttonA.y) / (buttonB.y * buttonA.x - buttonB.x * buttonA.y)
-  (b, 0) <- pure $ (prize.y * buttonA.x - prize.x * buttonA.y) `quotRem` (buttonB.y * buttonA.x - buttonB.x * buttonA.y)
-  (a, 0) <- pure $ (prize.x - b * buttonB.x) `quotRem` buttonA.x
-  pure $ 3*a + b
+component :: (Integral w, Integral h) => Set (Point w h) -> Point w h -> Set (Point w h)
+component set = \p -> loop (Set.singleton p) [p] where
+  loop seen = \case
+    [] -> seen
+    p:ps ->
+      let qs = [q | q <- [p{x=p.x+1}, p{x=p.x-1}, p{y=p.y+1}, p{y=p.y+1}], Set.member q set, not (Set.member q seen)]
+       in loop (Set.union seen (Set.fromList qs)) (qs <> ps)
+
+
+-- $/> printFrame 11 7 0 firstExample
+printFrame :: Int -> Int -> Int -> Frame -> IO ()
+printFrame w h n positions = do
+  -- putStr $ concat  ["\n" | _ <- [1..117 :: Int]]
+  -- putStr "\ESC[2J"
+  -- putStr "\ESC[;H"
+  print n
+  putStrLn do
+    List.intercalate "\n" do
+      y <- [0..h-1]
+      pure do
+        x <- [0..w-1]
+        pure if Set.member Point{x,y} positions then '#' else '.'
+  -- threadDelay 80_000
+
+frames :: (Integral w, Integral h) => w -> h -> [Robot w h] -> [Set (Point w h)]
+frames w h = map frame . iterate (map (step w h))
+
+frame :: (Integral w, Integral h) => [Robot w h] -> Set (Point w h)
+frame robots = Set.fromList [r.position | r <- robots]
+
+type Frame = Set (Point Int Int)
+
+step :: (Integral w, Integral h) => w -> h -> Robot w h -> Robot w h
+step w h r = r
+  { position = Point
+    { x = wrap (r.position.x + r.velocity.x) w
+    , y = wrap (r.position.y + r.velocity.y) h
+    }
+  }
+
+part1Demo :: Puzzle -> Int
+part1Demo = safetyFactor @Int 100 11 7
+
+safetyFactor :: (Integral time, Integral w, Integral h) => time -> w -> h -> [Robot w h] -> Int
+safetyFactor t w h = product . quadrants t w h
+
+quadrants :: (Integral time, Integral w, Integral h) => time -> w -> h -> [Robot w h] -> Map Quadrant Int
+quadrants t w h = Map.fromListWith (+) . (`zip` repeat 1) . Maybe.mapMaybe (quadrant w h . walk t)
+
+walk :: (Integral time, Integral w, Integral h) => time -> Robot w h -> Robot w h
+walk t r = r
+  { position = Point
+      { x = r.position.x + r.velocity.x * fromIntegral t
+      , y = r.position.y + r.velocity.y * fromIntegral t
+      }
+  }
+
+quadrant :: (Integral w, Integral h) => w -> h -> Robot w h -> Maybe Quadrant
+quadrant w h r = case (wrap r.position.x w `compare` (w `div` 2), wrap r.position.y h `compare` (h `div` 2)) of
+  (LT, LT) -> Just NW
+  (LT, GT) -> Just SW
+  (GT, LT) -> Just NE
+  (GT, GT) -> Just SE
+  _ -> Nothing
+
+wrap :: Integral a => a -> a -> a
+wrap a b = rem (rem a b + b) b
+
+data Quadrant = NW | NE | SW | SE
+  deriving (Show, Eq, Ord)
 
 firstExample :: Puzzle
 firstExample =
-  [ Machine {buttonA = Point 94 34, buttonB = Point 22 67, prize = Point 8_400 5_400}
-  , Machine {buttonA = Point 26 66, buttonB = Point 67 21, prize = Point 12_748 12_176}
-  , Machine {buttonA = Point 17 86, buttonB = Point 84 37, prize = Point 7_870 6_450}
-  , Machine {buttonA = Point 69 23, buttonB = Point 27 71, prize = Point 18_641 10_279}
+  [ Robot { position = Point { x = 0, y = 4 }, velocity = Point { x = 3, y = -3 } }
+  , Robot { position = Point { x = 6, y = 3 }, velocity = Point { x = -1, y = -3 } }
+  , Robot { position = Point { x = 10, y = 3 }, velocity = Point { x = -1, y = 2 } }
+  , Robot { position = Point { x = 2, y = 0 }, velocity = Point { x = 2, y = -1 } }
+  , Robot { position = Point { x = 0, y = 0 }, velocity = Point { x = 1, y = 3 } }
+  , Robot { position = Point { x = 3, y = 0 }, velocity = Point { x = -2, y = -2 } }
+  , Robot { position = Point { x = 7, y = 6 }, velocity = Point { x = -1, y = -3 } }
+  , Robot { position = Point { x = 3, y = 0 }, velocity = Point { x = -1, y = -2 } }
+  , Robot { position = Point { x = 9, y = 3 }, velocity = Point { x = 2, y = 3 } }
+  , Robot { position = Point { x = 7, y = 3 }, velocity = Point { x = -1, y = 2 } }
+  , Robot { position = Point { x = 2, y = 4 }, velocity = Point { x = 2, y = -3 } }
+  , Robot { position = Point { x = 9, y = 5 }, velocity = Point { x = -3, y = -3 } }
   ]
 
 -- $> runTests
@@ -103,28 +172,22 @@ runTests = hspec do
   it "parses the first example" do
     let raw =
           [text|
-            Button A: X+94, Y+34
-            Button B: X+22, Y+67
-            Prize: X=8400, Y=5400
-
-            Button A: X+26, Y+66
-            Button B: X+67, Y+21
-            Prize: X=12748, Y=12176
-
-            Button A: X+17, Y+86
-            Button B: X+84, Y+37
-            Prize: X=7870, Y=6450
-
-            Button A: X+69, Y+23
-            Button B: X+27, Y+71
-            Prize: X=18641, Y=10279
+            p=0,4 v=3,-3
+            p=6,3 v=-1,-3
+            p=10,3 v=-1,2
+            p=2,0 v=2,-1
+            p=0,0 v=1,3
+            p=3,0 v=-2,-2
+            p=7,6 v=-1,-3
+            p=3,0 v=-1,-2
+            p=9,3 v=2,3
+            p=7,3 v=-1,2
+            p=2,4 v=2,-3
+            p=9,5 v=-3,-3
           |]
             <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 480
-
-  it "solves part two with the first example" do
-    part2 firstExample `shouldBe` 875318608908
+    part1Demo firstExample `shouldBe` 12

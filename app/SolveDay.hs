@@ -18,13 +18,16 @@ import System.Exit (die)
 import Text.Parsec.Text (Parser, parseFromFile)
 import Prelude
 
-solveDay :: Show b => Parser a -> (a -> b) -> Day -> IO ()
-solveDay parser solver day = do
+solveDayIO :: Parser a -> (a -> IO ()) -> Day -> IO ()
+solveDayIO parser solver day = do
   inputPath <- downloadInput day
 
   parseFromFile parser inputPath >>= \case
     Left err -> die (show err)
-    Right input -> print (solver input)
+    Right input -> solver input
+
+solveDay :: Show b => Parser a -> (a -> b) -> Day -> IO ()
+solveDay parser solver = solveDayIO parser (print . solver)
 
 dayFormat :: String
 dayFormat = "%Y/day/%-d"
