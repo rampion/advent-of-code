@@ -17,6 +17,7 @@ executable advent-of-code
     , comonad
     , containers
     , directory
+    , ghc
     , hspec
     , http-client
     , http-client-tls
