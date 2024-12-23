@@ -22,7 +22,7 @@
 module Main where
 
 -- import Control.Monad ((>=>))
--- import Control.Monad qualified as Monad
+import Control.Monad qualified as Monad
 -- import Control.Monad.State.Strict (MonadState)
 -- import Control.Monad.State.Strict qualified as MonadState
 -- import Control.Monad.Trans.Maybe (MaybeT (runMaybeT))
@@ -31,9 +31,9 @@ module Main where
 -- import Control.Monad.Trans.Writer.Strict (Writer, runWriter)
 -- import Control.Monad.Writer.Strict qualified as MonadWriter
 -- import Control.Concurrent (threadDelay)
-import Data.Bits
+-- import Data.Bits
 -- import Data.Foldable qualified as Foldable
--- import Data.Function ((&))
+import Data.Function (on)
 -- import Data.Functor ((<&>))
 -- import Data.Functor.Const (Const (Const, getConst))
 -- import Data.Functor.Identity (Identity (Identity, runIdentity))
@@ -41,12 +41,12 @@ import Data.Bits
 import Data.List qualified as List
 -- import Data.List.NonEmpty (NonEmpty(..))
 -- import Data.List.NonEmpty qualified as NonEmpty
-import Data.Map (Map)
+-- import Data.Map (Map)
 import Data.Map qualified as Map
 -- import Data.Maybe qualified as Maybe
 -- import Data.Ratio ((%))
--- import Data.Set (Set)
--- import Data.Set qualified as Set
+import Data.Set (Set)
+import Data.Set qualified as Set
 import Data.Time (fromGregorian)
 -- import Debug.Trace (traceShow)
 -- import Data.Vector (Vector)
@@ -60,87 +60,145 @@ import Prelude
 
 main :: IO ()
 main = do
-  solveDay parse1 part2 $ fromGregorian 2024 12 22
+  solveDay parse1 part2 $ fromGregorian 2024 12 23
 
-type Puzzle = [SecretValue]
+type Puzzle = [Connection]
 
-newtype SecretValue = SecretValue {getSecretValue :: Int}
-  deriving newtype (Show, Eq, Bits, Read, Num)
+type Connection = (Computer, Computer)
+
+type Computer = (Char, Char)
 
 parse1 :: Parser Puzzle
-parse1 = (secretNumber `endBy` newline) <* eof
+parse1 = (connection `endBy` newline) <* eof
   where
-    secretNumber = read <$> many1 digit
+    connection = (,) <$> computer <* char '-' <*> computer
+    computer = (,) <$> lower <*> lower
 
 firstExample :: Puzzle
-firstExample = [1, 10, 100, 2024]
+firstExample =
+  [ (('k', 'h'), ('t', 'c'))
+  , (('q', 'p'), ('k', 'h'))
+  , (('d', 'e'), ('c', 'g'))
+  , (('k', 'a'), ('c', 'o'))
+  , (('y', 'n'), ('a', 'q'))
+  , (('q', 'p'), ('u', 'b'))
+  , (('c', 'g'), ('t', 'b'))
+  , (('v', 'c'), ('a', 'q'))
+  , (('t', 'b'), ('k', 'a'))
+  , (('w', 'h'), ('t', 'c'))
+  , (('y', 'n'), ('c', 'g'))
+  , (('k', 'h'), ('u', 'b'))
+  , (('t', 'a'), ('c', 'o'))
+  , (('d', 'e'), ('c', 'o'))
+  , (('t', 'c'), ('t', 'd'))
+  , (('t', 'b'), ('w', 'q'))
+  , (('w', 'h'), ('t', 'd'))
+  , (('t', 'a'), ('k', 'a'))
+  , (('t', 'd'), ('q', 'p'))
+  , (('a', 'q'), ('c', 'g'))
+  , (('w', 'q'), ('u', 'b'))
+  , (('u', 'b'), ('v', 'c'))
+  , (('d', 'e'), ('t', 'a'))
+  , (('w', 'q'), ('a', 'q'))
+  , (('w', 'q'), ('v', 'c'))
+  , (('w', 'h'), ('y', 'n'))
+  , (('k', 'a'), ('d', 'e'))
+  , (('k', 'h'), ('t', 'a'))
+  , (('c', 'o'), ('t', 'c'))
+  , (('w', 'h'), ('q', 'p'))
+  , (('t', 'b'), ('v', 'c'))
+  , (('t', 'd'), ('y', 'n'))
+  ]
 
-secondExample :: Puzzle
-secondExample = [1, 2, 3, 2024]
+swap :: (a, b) -> (b, a)
+swap (a, b) = (b, a)
 
-part1 :: Puzzle -> SecretValue
-part1 = sum . map step2000
+part1 :: Puzzle -> Int
+part1 = length . tTriangles
 
-part2 :: Puzzle -> Price
-part2 = maximum . Map.unionsWith (+) . map (yields . take 2001 . iterate step)
+tTriangles :: Puzzle -> [(Computer, Computer, Computer)]
+tTriangles cs = do
+  let sorted = [if (a < b) then (a, b) else (b, a) | (a, b) <- cs]
+  let edges = Set.fromList sorted
+  let neighbors = Map.fromListWith (<>) do
+        (a, b) <- sorted
+        pure (a, Set.singleton b)
+  (x, ns) <- Map.toList neighbors
+  y : rest <- List.tails $ Set.toAscList ns
+  z <- rest
+  Monad.guard $ Set.member (y, z) edges && any ((== 't') . fst) [x, y, z]
+  pure (x, y, z)
 
-yields :: [SecretValue] -> Map Pattern Price
-yields = Map.fromListWith (const id) . patternYields . map price
+maximumOn :: (Ord a) => (b -> a) -> [b] -> b
+maximumOn f = List.maximumBy (compare `on` f)
 
-price :: SecretValue -> Price
-price = Price . flip mod 10 . getSecretValue
+part2 :: Puzzle -> String
+part2 cs = format . snd $ maximumOn fst do
+  let sorted = [if (a < b) then (a, b) else (b, a) | (a, b) <- cs]
+  let edges = Set.fromList sorted
+  let neighbors = Map.fromListWith (<>) do
+        (a, b) <- sorted
+        pure (a, Set.singleton b)
+  (x, ns) <- Map.toList neighbors
+  let (m, cl) = maximumOn fst $ cliques edges $ Set.toAscList ns
+  pure (m + 1, x : cl)
 
 -- $> main
 
-patternYields :: [Price] -> [(Pattern, Price)]
-patternYields ps = do
-  let d :: Price -> Price -> Delta
-      d (Price a) (Price b) = Delta (b - a)
-  p0 : p1 : p2 : p3 : p4 : _ <- List.tails ps
-  pure ((d p0 p1, d p1 p2, d p2 p3, d p3 p4), p4)
+cliques :: (Ord a) => Set (a, a) -> [a] -> [(Int, [a])]
+cliques edges = \case
+  [] -> pure (0, [])
+  a : as -> do
+    let bs = filter (\b -> Set.member (a, b) edges) as
+    [(m + 1, a : cl) | (m, cl) <- cliques edges bs] <> cliques edges as
 
-newtype Price = Price {getPrice :: Int}
-  deriving newtype (Show, Eq, Ord, Num)
-
-newtype Delta = Delta {getDelta :: Int}
-  deriving newtype (Show, Eq, Ord, Num)
-
-type Pattern = (Delta, Delta, Delta, Delta)
-
-step2000 :: SecretValue -> SecretValue
-step2000 initial = iterate step initial !! 2000
-
-step :: SecretValue -> SecretValue
-step = mul2048 . div32 . mul64
-  where
-    mask = 16_777_216 - 1
-    mul64 n = xor n (n `shiftL` 6) .&. mask
-    div32 n = xor n (n `shiftR` 5) .&. mask
-    mul2048 n = xor n (n `shiftL` 11) .&. mask
+format :: [Computer] -> String
+format cs = List.intercalate "," [[a, b] | (a, b) <- cs]
 
 runTests :: IO ()
 runTests = hspec do
   it "parses the first example" do
     let raw =
           [text|
-            1
-            10
-            100
-            2024
+            kh-tc
+            qp-kh
+            de-cg
+            ka-co
+            yn-aq
+            qp-ub
+            cg-tb
+            vc-aq
+            tb-ka
+            wh-tc
+            yn-cg
+            kh-ub
+            ta-co
+            de-co
+            tc-td
+            tb-wq
+            wh-td
+            ta-ka
+            td-qp
+            aq-cg
+            wq-ub
+            ub-vc
+            de-ta
+            wq-aq
+            wq-vc
+            wh-yn
+            ka-de
+            kh-ta
+            co-tc
+            wh-qp
+            tb-vc
+            td-yn
           |]
             <> "\n"
 
     parse parse1 "first example" raw `shouldBe` Right firstExample
 
-  it "correctly single-steps 123" do
-    take 11 (iterate step 123)
-      `shouldBe` [123, 15887950, 16495136, 527345, 704524, 1553684, 12683156, 11100544, 12249484, 7753432, 5908254]
-
   it "solves part one with the first example" do
-    part1 firstExample `shouldBe` 37327623
-
-  it "computes " do
-    map step2000 firstExample `shouldBe` [8685429, 4700978, 15273692, 8667524]
+    part1 firstExample `shouldBe` 7
 
   it "solves part two with the second example" do
-    part2 secondExample `shouldBe` 23
+    part2 firstExample `shouldBe` format [('c', 'o'), ('d', 'e'), ('k', 'a'), ('t', 'a')]
